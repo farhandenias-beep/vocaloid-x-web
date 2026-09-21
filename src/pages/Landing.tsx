@@ -139,7 +139,7 @@ const PROJECTS: {
   progress: number;
 }[] = [
   {
-    name: "VOCALOID-X CORE",
+    name: "VOCALOID-X PC",
     tagline:
       "Kernel utama yang menyatukan AI, manusia, dan data realtime dalam satu kesadaran digital.",
     stack: ["TYPESCRIPT", "CONVEX", "REACT"],
