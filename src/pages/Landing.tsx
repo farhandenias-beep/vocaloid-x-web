@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useActiveSection, scrollToSection } from "@/hooks/use-active-section";
+import { DEVELOPER_NAME } from "@/lib/brand";
 import { api } from "@/convex/_generated/api";
 import { cn, formatConvexError } from "@/lib/utils";
 import { useMutation } from "convex/react";
@@ -325,6 +326,9 @@ function About() {
               TENTANG KAMI
               <ArrowRight className="size-4" />
             </Button>
+            <p className="vx-mono mt-7 text-[10px] tracking-[0.26em] text-muted-foreground">
+              DEVELOPED BY <span className="text-vx-red">{DEVELOPER_NAME}</span>
+            </p>
           </motion.div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7 xl:grid-cols-4">

@@ -17,6 +17,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
+import { DEVELOPER_NAME } from "@/lib/brand";
 import { scrollToSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
 import {
@@ -287,6 +288,12 @@ export function SideRail({ active }: { active: string }) {
             {user?.name?.toUpperCase() || "VOCALOID-X"}
           </p>
         </div>
+        <div className="space-y-2 border-t border-vx-red/15 pt-4">
+          <p className="vx-label">// DEVELOPER</p>
+          <p className="vx-mono text-[11px] tracking-[0.16em] text-rose-100/85">
+            {DEVELOPER_NAME}
+          </p>
+        </div>
       </div>
     </aside>
   );
@@ -331,10 +338,15 @@ export function SiteFooter() {
           ))}
         </div>
 
-        <p className="vx-mono text-[11px] tracking-[0.14em] text-muted-foreground">
-          © 2026 VOCALOID-X.{" "}
-          <span className="text-vx-red/80">ALL RIGHTS RESERVED.</span>
-        </p>
+        <div className="vx-mono text-[11px] tracking-[0.14em] text-muted-foreground lg:text-right">
+          <p>
+            © 2026 VOCALOID-X.{" "}
+            <span className="text-vx-red/80">ALL RIGHTS RESERVED.</span>
+          </p>
+          <p className="mt-1.5">
+            DEVELOPED BY <span className="text-vx-red">{DEVELOPER_NAME}</span>
+          </p>
+        </div>
       </div>
     </footer>
   );

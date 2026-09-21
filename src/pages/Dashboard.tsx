@@ -19,9 +19,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { useAuth } from "@/hooks/use-auth";
+import { DEVELOPER_NAME } from "@/lib/brand";
 import { cn, formatConvexError } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import {
+  Code2,
   FolderKanban,
   Inbox,
   LogOut,
@@ -500,6 +502,7 @@ export default function Dashboard() {
               <div className="mt-5 space-y-3 border-t border-vx-red/15 pt-4">
                 {[
                   { icon: UserRound, label: "ROLE", value: user?.role ?? "member" },
+                  { icon: Code2, label: "DEVELOPER", value: DEVELOPER_NAME },
                   { icon: ShieldCheck, label: "ACCESS", value: "console:full" },
                   {
                     icon: FolderKanban,
