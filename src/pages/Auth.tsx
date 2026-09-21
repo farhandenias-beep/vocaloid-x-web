@@ -282,15 +282,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
             )}
 
             <div className="vx-mono border-t border-vx-red/20 bg-vx-red/5 px-6 py-4 text-center text-[10px] tracking-[0.14em] text-muted-foreground">
-              SECURED BY{" "}
-              <a
-                href="https://freebuff.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-vx-red underline-offset-4 hover:underline"
-              >
-                FREEBUFF.COM
-              </a>
+              SECURED BY <span className="text-vx-red">FARHANLVLY</span>
             </div>
           </Card>
 
