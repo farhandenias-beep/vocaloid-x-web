@@ -1,0 +1,331 @@
+/* DO NOT CHANGE */
+@import "tailwindcss";
+@import "tw-animate-css";
+@custom-variant dark (&:is(.dark *));
+
+/* DO NOT CHANGE */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* VOCALOID-X palette + typography */
+@theme {
+  --font-sans: "Rajdhani", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Orbitron", "Rajdhani", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --color-vx-red: #ff2a45;
+  --color-vx-crimson: #c1122c;
+  --color-vx-blood: #78061a;
+  --color-vx-ember: #ff7a3d;
+  --color-vx-ink: #050407;
+  --color-vx-panel: #0c0509;
+
+  --animate-vx-scan: vx-scan 7s linear infinite;
+  --animate-vx-pulse: vx-pulse 2.6s ease-in-out infinite;
+  --animate-vx-flicker: vx-flicker 6s steps(1, end) infinite;
+  --animate-vx-drift: vx-drift 22s linear infinite;
+  --animate-vx-caret: vx-caret 1.05s steps(1, end) infinite;
+}
+
+/* CHANGE VALUES FOR THEME */
+:root {
+  color-scheme: dark;
+  --radius: 0.25rem;
+  --background: #050407;
+  --foreground: #f5eef0;
+  --card: #0c0509;
+  --card-foreground: #f5eef0;
+  --popover: #0c0509;
+  --popover-foreground: #f5eef0;
+  --primary: #ff2a45;
+  --primary-foreground: #0b0206;
+  --secondary: #1a0c11;
+  --secondary-foreground: #f6dfe3;
+  --muted: #150a0e;
+  --muted-foreground: #a1848b;
+  --accent: #26101a;
+  --accent-foreground: #ffe6ea;
+  --destructive: #ff3b3b;
+  --border: rgba(255, 42, 69, 0.22);
+  --input: rgba(255, 42, 69, 0.16);
+  --ring: #ff2a45;
+  --chart-1: #ff2a45;
+  --chart-2: #ff7a3d;
+  --chart-3: #c1122c;
+  --chart-4: #ff9db0;
+  --chart-5: #78061a;
+  --sidebar: #090508;
+  --sidebar-foreground: #f5eef0;
+  --sidebar-primary: #ff2a45;
+  --sidebar-primary-foreground: #0b0206;
+  --sidebar-accent: #1a0c11;
+  --sidebar-accent-foreground: #ffe6ea;
+  --sidebar-border: rgba(255, 42, 69, 0.22);
+  --sidebar-ring: #ff2a45;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #050407;
+  --foreground: #f5eef0;
+  --card: #0c0509;
+  --card-foreground: #f5eef0;
+  --popover: #0c0509;
+  --popover-foreground: #f5eef0;
+  --primary: #ff2a45;
+  --primary-foreground: #0b0206;
+  --secondary: #1a0c11;
+  --secondary-foreground: #f6dfe3;
+  --muted: #150a0e;
+  --muted-foreground: #a1848b;
+  --accent: #26101a;
+  --accent-foreground: #ffe6ea;
+  --destructive: #ff3b3b;
+  --border: rgba(255, 42, 69, 0.22);
+  --input: rgba(255, 42, 69, 0.16);
+  --ring: #ff2a45;
+  --chart-1: #ff2a45;
+  --chart-2: #ff7a3d;
+  --chart-3: #c1122c;
+  --chart-4: #ff9db0;
+  --chart-5: #78061a;
+  --sidebar: #090508;
+  --sidebar-foreground: #f5eef0;
+  --sidebar-primary: #ff2a45;
+  --sidebar-primary-foreground: #0b0206;
+  --sidebar-accent: #1a0c11;
+  --sidebar-accent-foreground: #ffe6ea;
+  --sidebar-border: rgba(255, 42, 69, 0.22);
+  --sidebar-ring: #ff2a45;
+}
+
+@keyframes vx-scan {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(1200%);
+  }
+}
+
+@keyframes vx-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(255, 42, 69, 0.9));
+  }
+  50% {
+    opacity: 0.45;
+    filter: drop-shadow(0 0 10px rgba(255, 42, 69, 0.5));
+  }
+}
+
+@keyframes vx-flicker {
+  0%,
+  93%,
+  100% {
+    opacity: 1;
+  }
+  94% {
+    opacity: 0.55;
+  }
+  95% {
+    opacity: 0.95;
+  }
+  96% {
+    opacity: 0.4;
+  }
+  97% {
+    opacity: 1;
+  }
+}
+
+@keyframes vx-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) scale(1.03);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes vx-caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv01";
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: rgba(255, 42, 69, 0.35);
+    color: #fff;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
+  }
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #08050a;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ff2a45, #78061a);
+    border-radius: 999px;
+    border: 2px solid #08050a;
+  }
+}
+
+@layer components {
+  /* Neon glow used on hero + section headings */
+  .vx-glow {
+    text-shadow:
+      0 0 10px rgba(255, 42, 69, 0.55),
+      0 0 34px rgba(255, 42, 69, 0.35),
+      0 0 70px rgba(120, 6, 26, 0.5);
+  }
+
+  .vx-glow-soft {
+    text-shadow: 0 0 12px rgba(255, 42, 69, 0.35);
+  }
+
+  /* Notched "cut corner" plate used by every panel in the reference art */
+  .vx-cut {
+    clip-path: polygon(
+      14px 0,
+      100% 0,
+      100% calc(100% - 14px),
+      calc(100% - 14px) 100%,
+      0 100%,
+      0 14px
+    );
+  }
+
+  .vx-cut-sm {
+    clip-path: polygon(
+      8px 0,
+      100% 0,
+      100% calc(100% - 8px),
+      calc(100% - 8px) 100%,
+      0 100%,
+      0 8px
+    );
+  }
+
+  .vx-panel {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(28, 8, 15, 0.92), rgba(7, 4, 8, 0.94));
+    border: 1px solid rgba(255, 42, 69, 0.28);
+    box-shadow:
+      inset 0 0 24px rgba(255, 42, 69, 0.05),
+      0 18px 40px -28px rgba(255, 42, 69, 0.55);
+    backdrop-filter: blur(6px);
+  }
+
+  .vx-panel:hover {
+    border-color: rgba(255, 42, 69, 0.5);
+  }
+
+  /* Thin architectural grid behind sections */
+  .vx-grid {
+    background-image:
+      linear-gradient(rgba(255, 42, 69, 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 42, 69, 0.07) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  /* CRT scanline overlay */
+  .vx-scanlines::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      180deg,
+      rgba(255, 42, 69, 0.05) 0px,
+      rgba(255, 42, 69, 0.05) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+    mix-blend-mode: screen;
+  }
+
+  .vx-hex {
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+
+  .vx-mono {
+    font-family: var(--font-mono);
+  }
+
+  .vx-label {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.625rem;
+    color: rgba(255, 154, 170, 0.85);
+  }
+}
