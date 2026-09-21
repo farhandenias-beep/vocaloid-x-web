@@ -147,7 +147,7 @@ const PROJECTS: {
     progress: 94,
   },
   {
-    name: "SHADOW.NEXUS",
+    name: "VOCALOID-X MOBILE",
     tagline:
       "Jaringan komunitas anonim dengan enkripsi penuh dan identitas terdesentralisasi.",
     stack: ["VITE", "WEBCRYPTO", "P2P"],
