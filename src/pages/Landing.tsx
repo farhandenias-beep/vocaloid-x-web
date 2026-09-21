@@ -675,7 +675,7 @@ function Contact() {
               {[
                 { icon: Mail, label: "EMAIL", value: "hello@vocaloid-x.dev" },
                 { icon: Clock, label: "RESPON", value: "< 24 jam kerja" },
-                { icon: MapPin, label: "BASE", value: "Jakarta, Indonesia" },
+                { icon: MapPin, label: "BASE", value: "Subang, Jawa Barat" },
                 { icon: Globe, label: "ZONA WAKTU", value: "GMT+7 // 24/7 online" },
               ].map((row) => (
                 <div key={row.label} className="flex items-center gap-3">
