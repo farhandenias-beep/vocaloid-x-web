@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import {
   DEVELOPER_NAME,
+  ORDER_INTRO,
   STORE_TAGLINE,
   WHATSAPP_LABEL,
   whatsappUrl,
@@ -307,7 +308,7 @@ const SOCIALS: { icon: LucideIcon; label: string; href: string }[] = [
   {
     icon: MessageCircle,
     label: "WhatsApp",
-    href: whatsappUrl("Halo VOCALOID-X! Saya mau order."),
+    href: whatsappUrl(`${ORDER_INTRO} paket FF PC.`),
   },
   { icon: Instagram, label: "Instagram", href: "https://instagram.com" },
   { icon: Music2, label: "TikTok", href: "https://tiktok.com" },

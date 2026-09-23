@@ -1,5 +1,5 @@
 import {
-  BRAND_NAME,
+  ORDER_INTRO,
   WHATSAPP_NUMBER,
   normalizeWhatsApp,
 } from "@/lib/brand";
@@ -52,7 +52,7 @@ export function formatIDR(value: number) {
 /** Prefilled WhatsApp text for a single package. */
 export function productOrderMessage(product: StoreProduct) {
   return [
-    `Halo ${BRAND_NAME}! Saya mau order paket berikut:`,
+    `${ORDER_INTRO} paket ini:`,
     "",
     `• Paket    : ${product.name}`,
     `• Kategori : ${product.category}`,
@@ -76,7 +76,7 @@ export function customOrderMessage({
   note?: string;
 }) {
   return [
-    `Halo ${BRAND_NAME}! Saya mau order.`,
+    `${ORDER_INTRO}.`,
     "",
     `• Nama   : ${name}`,
     productName ? `• Paket  : ${productName}` : "",
@@ -90,7 +90,7 @@ export function customOrderMessage({
 }
 
 export function whatsappContactLink(message?: string) {
-  const text = message ?? `Halo ${BRAND_NAME}! Saya mau bertanya soal produk.`;
+  const text = message ?? `${ORDER_INTRO} paket FF PC, boleh minta info dulu?`;
   return `https://wa.me/${normalizeWhatsApp(WHATSAPP_NUMBER)}?text=${encodeURIComponent(text)}`;
 }
 

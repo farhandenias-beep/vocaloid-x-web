@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useActiveSection, scrollToSection } from "@/hooks/use-active-section";
 import {
   OPERATIONAL_HOURS,
+  ORDER_INTRO,
   STORE_CITY,
   WHATSAPP_LABEL,
   whatsappUrl,
@@ -251,9 +252,7 @@ function Hero() {
                 className="vx-cut vx-mono border-vx-red/40 bg-transparent px-7 text-[11px] tracking-[0.24em] text-rose-100 hover:border-vx-red/80 hover:bg-vx-red/10 hover:text-white"
               >
                 <a
-                  href={whatsappUrl(
-                    "Halo VOCALOID-X! Saya mau order paket cheat / setting FF PC.",
-                  )}
+                  href={whatsappUrl(`${ORDER_INTRO} paket cheat / setting FF PC.`)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -513,7 +512,7 @@ function Catalog() {
             className="vx-cut vx-mono border-vx-red/40 bg-transparent gap-2 px-6 text-[11px] tracking-[0.22em] text-rose-100 hover:bg-vx-red/10 hover:text-white"
           >
             <a
-              href={whatsappUrl("Halo VOCALOID-X! Saya mau tanya paket custom.")}
+              href={whatsappUrl(`${ORDER_INTRO} paket custom, bisa dibantu?`)}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -844,7 +843,7 @@ function Order() {
                 className="vx-cut vx-mono w-full gap-2 text-[11px] tracking-[0.22em]"
               >
                 <a
-                  href={whatsappUrl("Halo VOCALOID-X! Saya mau tanya-tanya dulu.")}
+                  href={whatsappUrl(`${ORDER_INTRO}, boleh minta info dulu?`)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
