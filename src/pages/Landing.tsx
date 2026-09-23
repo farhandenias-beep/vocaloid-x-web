@@ -827,7 +827,7 @@ function PaymentPanel() {
           <img
             src={qrisUrl}
             alt="QRIS VOCALOID-X"
-            className="h-44 w-44 object-contain"
+            className="h-auto w-full max-w-[260px] object-contain"
           />
           <p className="vx-mono text-[10px] tracking-[0.2em] text-[#40020e]">
             SCAN QRIS UNTUK BAYAR
@@ -839,7 +839,7 @@ function PaymentPanel() {
             className="vx-mono vx-cut-sm border-vx-red/35 bg-transparent text-[10px] tracking-[0.18em] text-rose-100 hover:bg-vx-red/10 hover:text-white"
           >
             <a href={qrisUrl} target="_blank" rel="noopener noreferrer">
-              BUKA / SIMPAN GAMBAR
+              BUKA / PERBESAR QRIS
             </a>
           </Button>
         </div>
