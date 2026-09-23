@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { useAuth } from "@/hooks/use-auth";
-import { DEVELOPER_NAME } from "@/lib/brand";
+import { DEVELOPER_NAME, normalizeWhatsApp } from "@/lib/brand";
 import {
   PRODUCT_CATEGORIES,
   PRODUCT_STATUS_CYCLE,
@@ -61,8 +61,7 @@ function timeAgo(timestamp: number) {
 
 /** Turns a local 08xx number into an international wa.me link. */
 function contactLink(contact: string, message: string) {
-  const digits = contact.replace(/\D/g, "").replace(/^0/, "62");
-  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${normalizeWhatsApp(contact)}?text=${encodeURIComponent(message)}`;
 }
 
 function ConsoleHeader() {

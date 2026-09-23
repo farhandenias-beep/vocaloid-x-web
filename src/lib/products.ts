@@ -1,4 +1,8 @@
-import { BRAND_NAME, WHATSAPP_NUMBER } from "@/lib/brand";
+import {
+  BRAND_NAME,
+  WHATSAPP_NUMBER,
+  normalizeWhatsApp,
+} from "@/lib/brand";
 
 export type ProductStatus = "available" | "sold_out" | "coming_soon";
 
@@ -86,9 +90,8 @@ export function customOrderMessage({
 }
 
 export function whatsappContactLink(message?: string) {
-  const digits = WHATSAPP_NUMBER.replace(/\D/g, "");
   const text = message ?? `Halo ${BRAND_NAME}! Saya mau bertanya soal produk.`;
-  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+  return `https://wa.me/${normalizeWhatsApp(WHATSAPP_NUMBER)}?text=${encodeURIComponent(text)}`;
 }
 
 /** Starter catalogue: used to seed the store and shown while it is empty. */
