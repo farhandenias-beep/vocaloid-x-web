@@ -1,10 +1,33 @@
 import { cn } from "@/lib/utils";
-import { useId } from "react";
+import { useId, useState } from "react";
 
-/** VOCALOID-X sigil: eight-point demon star above a cross. */
+/**
+ * Drop your own artwork at `public/vocaloid-x-logo.png` and it replaces the
+ * SVG sigil everywhere (top bar, rail, footer, console). Falls back to the
+ * built-in sigil while the file is missing.
+ */
+const CUSTOM_LOGO_SRC = "/vocaloid-x-logo.png";
+
+/** VOCALOID-X sigil: eight-point demon star above a cross (built-in fallback). */
 export function LogoMark({ className }: { className?: string }) {
   const rawId = useId();
   const id = `vx-${rawId.replace(/[^a-zA-Z0-9]/g, "")}`;
+  const [hasCustom, setHasCustom] = useState(true);
+
+  if (hasCustom) {
+    return (
+      <img
+        src={CUSTOM_LOGO_SRC}
+        alt=""
+        aria-hidden="true"
+        onError={() => setHasCustom(false)}
+        className={cn(
+          "h-8 w-8 shrink-0 object-contain select-none drop-shadow-[0_0_10px_rgba(255,42,69,0.45)]",
+          className,
+        )}
+      />
+    );
+  }
 
   return (
     <svg
