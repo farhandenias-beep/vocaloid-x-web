@@ -132,7 +132,14 @@ const ORDER_STEPS: { step: string; title: string; detail: string }[] = [
   },
 ];
 
-const PAYMENTS = ["BCA", "DANA", "GOPAY", "OVO", "SHOPEEPAY", "QRIS"];
+const FALLBACK_PAYMENTS = [
+  "BCA",
+  "DANA",
+  "GOPAY",
+  "OVO",
+  "SHOPEEPAY",
+  "QRIS",
+];
 
 const FAQ: { question: string; answer: string }[] = [
   {
@@ -603,6 +610,9 @@ function Advantages() {
 }
 
 function HowToOrder() {
+  const settings = useQuery(api.settings.get);
+  const payments = settings?.paymentMethods ?? FALLBACK_PAYMENTS;
+
   return (
     <section
       id="cara-order"
@@ -646,7 +656,7 @@ function HowToOrder() {
             METODE PEMBAYARAN
           </span>
           <div className="flex flex-wrap gap-2">
-            {PAYMENTS.map((payment) => (
+            {payments.map((payment) => (
               <span
                 key={payment}
                 className="vx-mono border border-vx-red/20 bg-vx-red/5 px-2.5 py-1 text-[10px] tracking-[0.18em] text-rose-100/80"
@@ -789,6 +799,66 @@ function OrderForm({ catalog }: { catalog: StoreProduct[] }) {
   );
 }
 
+function PaymentPanel() {
+  const settings = useQuery(api.settings.get);
+  const payments = settings?.paymentMethods ?? FALLBACK_PAYMENTS;
+  const qrisUrl = settings?.qrisUrl;
+
+  return (
+    <HudPanel label="// PEMBAYARAN" bodyClassName="px-5 py-5">
+      <div className="flex flex-wrap gap-2">
+        {payments.map((payment) => (
+          <span
+            key={payment}
+            className={cn(
+              "vx-mono border px-2.5 py-1 text-[10px] tracking-[0.18em]",
+              payment === "QRIS"
+                ? "border-vx-red/50 bg-vx-red/15 text-rose-50"
+                : "border-vx-red/20 bg-vx-red/5 text-rose-100/80",
+            )}
+          >
+            {payment}
+          </span>
+        ))}
+      </div>
+
+      {qrisUrl ? (
+        <div className="vx-cut-sm mt-4 flex flex-col items-center gap-3 border border-vx-red/25 bg-white/95 p-4">
+          <img
+            src={qrisUrl}
+            alt="QRIS VOCALOID-X"
+            className="h-44 w-44 object-contain"
+          />
+          <p className="vx-mono text-[10px] tracking-[0.2em] text-[#40020e]">
+            SCAN QRIS UNTUK BAYAR
+          </p>
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="vx-mono vx-cut-sm border-vx-red/35 bg-transparent text-[10px] tracking-[0.18em] text-rose-100 hover:bg-vx-red/10 hover:text-white"
+          >
+            <a href={qrisUrl} target="_blank" rel="noopener noreferrer">
+              BUKA / SIMPAN GAMBAR
+            </a>
+          </Button>
+        </div>
+      ) : (
+        <p className="vx-mono mt-4 text-[11px] leading-5 text-muted-foreground">
+          QRIS belum diunggah. Minta QR ke admin lewat WhatsApp di atas, atau
+          unggah gambar QRIS Anda dari store console.
+        </p>
+      )}
+
+      {settings?.paymentNote && (
+        <p className="vx-mono mt-4 text-[11px] leading-5 text-muted-foreground">
+          {settings.paymentNote}
+        </p>
+      )}
+    </HudPanel>
+  );
+}
+
 function Order() {
   const live = useQuery(api.products.listPublic);
   const catalog: StoreProduct[] = live && live.length > 0 ? live : DEFAULT_PRODUCTS;
@@ -852,6 +922,8 @@ function Order() {
                 </a>
               </Button>
             </HudPanel>
+
+            <PaymentPanel />
 
             <HudPanel label="// FAQ" bodyClassName="space-y-4 px-5 py-5">
               {FAQ.map((item) => (

@@ -39,14 +39,17 @@ import {
   MessageCircle,
   Package,
   Plus,
+  QrCode,
+  Save,
   ShoppingBag,
   Sparkles,
   Store,
   Trash2,
+  Upload,
   UserRound,
   Wallet,
 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -442,6 +445,169 @@ function ProductManager({
   );
 }
 
+function PaymentSettings() {
+  const settings = useQuery(api.settings.get);
+  const generateUploadUrl = useMutation(api.settings.generateUploadUrl);
+  const setQris = useMutation(api.settings.setQris);
+  const updatePayment = useMutation(api.settings.updatePayment);
+
+  const [draftMethods, setDraftMethods] = useState<string | null>(null);
+  const [draftNote, setDraftNote] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const methods = draftMethods ?? settings?.paymentMethods.join(", ") ?? "";
+  const note = draftNote ?? settings?.paymentNote ?? "";
+
+  const handleUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type || "image/png" },
+        body: file,
+      });
+      const { storageId } = (await response.json()) as { storageId: string };
+      await setQris({ imageId: storageId as Id<"_storage"> });
+      toast.success("QRIS DIUNGGAH // Tampil di halaman order.");
+    } catch (error) {
+      toast.error(formatConvexError(error, "Gagal mengunggah QRIS."));
+    } finally {
+      setIsUploading(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleRemoveQris = async () => {
+    try {
+      await setQris({ imageId: null });
+      toast.success("QRIS DIHAPUS.");
+    } catch (error) {
+      toast.error(formatConvexError(error, "Gagal menghapus QRIS."));
+    }
+  };
+
+  const handleSavePayments = async () => {
+    setIsSaving(true);
+    try {
+      await updatePayment({ paymentMethods: methods, paymentNote: note });
+      toast.success("METODE PEMBAYARAN DISIMPAN.");
+    } catch (error) {
+      toast.error(formatConvexError(error, "Gagal menyimpan pembayaran."));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <HudPanel
+      label="// PEMBAYARAN & QRIS"
+      right={
+        <span className="vx-mono text-[10px] text-vx-red">
+          {settings?.qrisUrl ? "QRIS AKTIF" : "QRIS BELUM ADA"}
+        </span>
+      }
+      bodyClassName="p-5"
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="vx-cut-sm flex h-36 w-36 shrink-0 items-center justify-center overflow-hidden border border-vx-red/25 bg-[#0a0509]">
+          {settings?.qrisUrl ? (
+            <img
+              src={settings.qrisUrl}
+              alt="QRIS toko"
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <QrCode className="size-10 text-vx-red/40" />
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <p className="vx-mono text-[11px] leading-5 text-muted-foreground">
+            Unggah gambar QRIS (PNG/JPG). Gambar langsung tampil di section
+            pembayaran landing page agar pembeli bisa scan sendiri.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              asChild
+              variant="outline"
+              className="vx-mono vx-cut-sm border-vx-red/35 bg-transparent gap-2 text-[10px] tracking-[0.18em] text-rose-100 hover:bg-vx-red/10 hover:text-white"
+            >
+              <label className="cursor-pointer">
+                {isUploading ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Upload className="size-3.5" />
+                )}
+                {settings?.qrisUrl ? "GANTI QRIS" : "UNGGAH QRIS"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={isUploading}
+                  onChange={handleUpload}
+                />
+              </label>
+            </Button>
+            {settings?.qrisUrl && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleRemoveQris}
+                className="vx-mono gap-2 text-[10px] tracking-[0.18em] text-muted-foreground hover:bg-vx-red/10 hover:text-vx-red"
+              >
+                <Trash2 className="size-3.5" />
+                HAPUS
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-3 border-t border-vx-red/15 pt-4">
+        <label className="block space-y-2">
+          <span className="vx-label block">
+            // METODE PEMBAYARAN (PISAH DENGAN KOMA)
+          </span>
+          <Input
+            value={methods}
+            onChange={(event) => setDraftMethods(event.target.value)}
+            placeholder="BCA, DANA, GOPAY, OVO, QRIS"
+            className="vx-mono vx-cut-sm h-11 border-vx-red/25 bg-[#0a0509] text-sm focus-visible:border-vx-red/70"
+          />
+        </label>
+        <label className="block space-y-2">
+          <span className="vx-label block">// CATATAN PEMBAYARAN</span>
+          <Textarea
+            value={note}
+            rows={2}
+            maxLength={240}
+            onChange={(event) => setDraftNote(event.target.value)}
+            placeholder="Kirim bukti pembayaran ke WhatsApp admin."
+            className="vx-mono vx-cut-sm border-vx-red/25 bg-[#0a0509] text-sm focus-visible:border-vx-red/70"
+          />
+        </label>
+        <Button
+          type="button"
+          onClick={handleSavePayments}
+          disabled={isSaving}
+          className="vx-cut vx-mono gap-2 text-[11px] tracking-[0.22em]"
+        >
+          {isSaving ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Save className="size-4" />
+          )}
+          SIMPAN PEMBAYARAN
+        </Button>
+      </div>
+    </HudPanel>
+  );
+}
+
 function OrderInbox({ orders }: { orders: Doc<"orders">[] | undefined }) {
   const setStatus = useMutation(api.orders.setStatus);
   const removeOrder = useMutation(api.orders.remove);
@@ -706,8 +872,13 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="mt-5">
-          <OrderInbox orders={orders} />
+        <div className="mt-5 grid gap-5 xl:grid-cols-12">
+          <div className="xl:col-span-7">
+            <OrderInbox orders={orders} />
+          </div>
+          <div className="xl:col-span-5">
+            <PaymentSettings />
+          </div>
         </div>
       </main>
     </div>

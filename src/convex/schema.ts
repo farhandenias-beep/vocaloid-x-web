@@ -53,6 +53,14 @@ const schema = defineSchema(
       .index("by_user", ["userId"])
       .index("by_sort", ["sortOrder"]),
 
+    // store payment configuration (methods + QRIS image) for the landing page
+    settings: defineTable({
+      paymentMethods: v.array(v.string()),
+      paymentNote: v.string(),
+      qrisImageId: v.optional(v.id("_storage")),
+      updatedAt: v.number(),
+    }),
+
     // order intents captured from the landing page before WhatsApp handoff
     orders: defineTable({
       name: v.string(),
