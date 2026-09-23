@@ -179,7 +179,7 @@ export const DEFAULT_PRODUCTS: StoreProduct[] = [
     features: [
       "Preset sensitivitas + DPI",
       "Config engine emulator",
-      "Optimasi 60-90 FPS stabil",
+      "Optimasi 180-240 FPS stabil",
       "Tweak grafis & memori",
       "Panduan gambar langkah demi langkah",
       "Update gratis tanpa batas",
