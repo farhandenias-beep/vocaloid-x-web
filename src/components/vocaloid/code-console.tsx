@@ -2,7 +2,7 @@ import { HudPanel } from "@/components/vocaloid/hud";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 
-/** The `// VOCALOID-X.SYSTEM` code plate from the reference hero. */
+/** The `// VOCALOID-X.STORE` config plate from the hero. */
 export function CodeConsole({ className }: { className?: string }) {
   const key = "text-vx-red font-medium";
   const str = "text-[#ffb3c1]";
@@ -10,7 +10,7 @@ export function CodeConsole({ className }: { className?: string }) {
 
   return (
     <HudPanel
-      label="// VOCALOID-X.SYSTEM"
+      label="// VOCALOID-X.STORE"
       className={className}
       right={
         <span className="text-vx-red/70">
@@ -26,31 +26,34 @@ export function CodeConsole({ className }: { className?: string }) {
         className="vx-mono vx-scanlines relative overflow-x-auto text-[11px] leading-5 text-rose-100/85 sm:text-xs"
       >
         <code className="block">
-          <span className={kw}>const</span> <span className={key}>vision</span>
+          <span className={kw}>const</span> <span className={key}>store</span>
           {" = {"}
           {"\n  "}
-          <span className={key}>name</span>: <span className={str}>"VOCALOID-X"</span>,
+          <span className={key}>brand</span>: <span className={str}>"VOCALOID-X"</span>,
           {"\n  "}
-          <span className={key}>type</span>: <span className={str}>"AI + HUMAN"</span>,
+          <span className={key}>produk</span>: [<span className={str}>"CHEAT PC"</span>,{" "}
+          <span className={str}>"SETTING EMULATOR"</span>],
           {"\n  "}
-          <span className={key}>status</span>: <span className={str}>"ONLINE"</span>,
+          <span className={key}>update</span>: <span className={str}>"SETIAP PATCH"</span>,
           {"\n  "}
-          <span className={key}>version</span>: <span className={str}>"1.0.0"</span>,
+          <span className={key}>checkout</span>: <span className={str}>"WHATSAPP"</span>,
           {"\n  "}
-          <span className={key}>future</span>: <span className={str}>"UNLIMITED"</span>,
+          <span className={key}>garansi</span>: <span className={str}>"RESET GRATIS"</span>,
+          {"\n  "}
+          <span className={key}>status</span>: <span className={str}>"OPEN ORDER"</span>,
           {"\n};"}
           {"\n\n"}
-          <span className={kw}>while</span> (dreams) {"{"}
+          <span className={kw}>function</span> <span className={key}>order</span>(paket) {"{"}
           {"\n  "}
-          <span className="text-rose-200/90">create</span>();
+          <span className="text-rose-200/90">chat</span>(admin, paket);
           {"\n  "}
-          <span className="text-rose-200/90">build</span>();
+          <span className="text-rose-200/90">bayar</span>();
           {"\n  "}
-          <span className="text-rose-200/90">improve</span>();
+          <span className="text-rose-200/90">kirim</span>();
           {"\n}"}
           {"\n\n"}
           <span className="text-muted-foreground">
-            // The journey has just begun...
+            // update signature tiap hari, aman dipakai push rank
           </span>
           <span className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 animate-vx-caret bg-vx-red" />
         </code>

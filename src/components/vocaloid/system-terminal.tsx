@@ -2,31 +2,31 @@ import { HudPanel } from "@/components/vocaloid/hud";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
-const BOOT_LOG = [
-  "booting vocaloid-x kernel v1.0.0 ...",
-  "mounting /dev/demon-core ............ ok",
-  "loading neural weights (12.4M params)",
-  "handshake with human operator ...... ok",
-  "armoring fortress layer ............ ok",
-  "realtime sync channel .............. online",
-  "future-proofing runtime ............ engaged",
-  "system ready. awaiting input _",
+const ORDER_LOG = [
+  "storefront online ................ open order",
+  "katalog disinkron dari console ... ok",
+  "signature cheat di-refresh ....... ok",
+  "config emulator terbaru .......... ready",
+  "order #1041 cheats weekly ........ diproses",
+  "order #1042 setting emulator ..... terkirim",
+  "admin standby di whatsapp ........ online",
+  "semua sistem jalan normal _",
 ];
 
-/** Terminal that replays a boot sequence on a loop. */
+/** Terminal that replays the order pipeline on a loop. */
 export function SystemTerminal({ className }: { className?: string }) {
   const [count, setCount] = useState(1);
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      setCount((prev) => (prev >= BOOT_LOG.length ? 1 : prev + 1));
+      setCount((prev) => (prev >= ORDER_LOG.length ? 1 : prev + 1));
     }, 1200);
     return () => window.clearInterval(id);
   }, []);
 
   return (
     <HudPanel
-      label="// CORE.LOG"
+      label="// ORDER.LOG"
       className={cn("h-full", className)}
       right={
         <span className="vx-mono text-[10px] text-muted-foreground">
@@ -36,7 +36,7 @@ export function SystemTerminal({ className }: { className?: string }) {
       bodyClassName="h-full"
     >
       <div className="vx-mono space-y-1.5 text-[11px] leading-5 sm:text-xs">
-        {BOOT_LOG.slice(0, count).map((line, index) => (
+        {ORDER_LOG.slice(0, count).map((line, index) => (
           <p key={line} className="flex gap-2">
             <span className="text-vx-red/70">
               [{String(index + 1).padStart(2, "0")}]

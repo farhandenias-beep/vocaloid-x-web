@@ -16,37 +16,59 @@ import { SystemMonitor } from "@/components/vocaloid/system-monitor";
 import { SystemTerminal } from "@/components/vocaloid/system-terminal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useActiveSection, scrollToSection } from "@/hooks/use-active-section";
-import { DEVELOPER_NAME } from "@/lib/brand";
+import {
+  OPERATIONAL_HOURS,
+  STORE_CITY,
+  WHATSAPP_LABEL,
+  whatsappUrl,
+} from "@/lib/brand";
+import {
+  DEFAULT_PRODUCTS,
+  PRODUCT_STATUS_LABEL,
+  PRODUCT_STATUS_STYLES,
+  customOrderMessage,
+  formatIDR,
+  productOrderMessage,
+  type ProductStatus,
+  type StoreProduct,
+} from "@/lib/products";
 import { api } from "@/convex/_generated/api";
 import { cn, formatConvexError } from "@/lib/utils";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import {
-  Activity,
-  ArrowRight,
-  BrainCircuit,
+  BadgeCheck,
+  Check,
   ChevronDown,
   Clock,
-  Code2,
-  Cpu,
-  Globe,
+  Flame,
+  Headset,
+  Loader2,
   Lock,
-  Mail,
   MapPin,
-  Rocket,
-  Send,
+  MessageCircle,
+  Package,
   ShieldCheck,
-  Terminal,
+  ShoppingBag,
+  Sparkles,
+  Wallet,
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
-const SECTION_IDS = ["home", "about", "features", "projects", "contact"];
+const SECTION_IDS = ["home", "produk", "keunggulan", "cara-order", "order"];
 
 const reveal = {
   initial: { opacity: 0, y: 26 },
@@ -57,126 +79,82 @@ const reveal = {
 
 const PILLARS: { title: string; description: string; icon: LucideIcon }[] = [
   {
-    title: "MODERN CODE",
+    title: "ANTI-BANNED",
     description:
-      "Menggunakan teknologi terbaru untuk performa maksimal dan efisiensi tinggi.",
-    icon: Code2,
-  },
-  {
-    title: "AI INTEGRATION",
-    description:
-      "Menggabungkan kecerdasan buatan untuk pengalaman yang lebih pintar dan adaptif.",
-    icon: BrainCircuit,
-  },
-  {
-    title: "HIGH SECURITY",
-    description:
-      "Sistem keamanan tingkat tinggi untuk melindungi data dan privasi Anda.",
+      "Signature dibuat ulang setiap patch game, jadi akun utama tetap lebih aman saat dipakai push rank.",
     icon: ShieldCheck,
   },
   {
-    title: "FUTURE READY",
+    title: "UPDATE CEPAT",
     description:
-      "Selalu berkembang dan siap menghadapi tantangan di masa depan.",
-    icon: Rocket,
+      "Maintenance Free Fire selesai, build baru langsung dirilis di hari yang sama.",
+    icon: Zap,
+  },
+  {
+    title: "SUPPORT 24 JAM",
+    description:
+      "Ada kendala instalasi atau config? Chat WhatsApp dibalas langsung oleh admin asli.",
+    icon: Headset,
+  },
+  {
+    title: "GARANSI RESET",
+    description:
+      "Kalau paket bermasalah setelah update game, kami reset atau ganti tanpa biaya tambahan.",
+    icon: BadgeCheck,
   },
 ];
 
-const SYSTEMS: {
-  index: string;
-  name: string;
-  icon: LucideIcon;
-  summary: string;
-  points: string[];
-  stat: string;
-}[] = [
+const ORDER_STEPS: { step: string; title: string; detail: string }[] = [
   {
-    index: "01",
-    name: "GENESIS ENGINE",
-    icon: Cpu,
-    summary:
-      "Runtime modular yang menjaga seluruh dunia VOCALOID-X tetap sinkron dalam satu tarikan napas.",
-    points: [
-      "Realtime sync ke semua perangkat operator",
-      "Deploy tanpa downtime di tengah malam",
-      "Skalabilitas otomatis mengikuti beban",
-    ],
-    stat: "latensi rata-rata 42ms",
+    step: "01",
+    title: "PILIH PAKET",
+    detail:
+      "Tentukan paket cheat atau setingan emulator yang paling cocok dengan kebutuhan rank Anda.",
   },
   {
-    index: "02",
-    name: "NEURAL SYNC",
-    icon: BrainCircuit,
-    summary:
-      "Kecerdasan buatan yang belajar dari setiap interaksi untuk memahami konteks, bukan hanya perintah.",
-    points: [
-      "Model multimodal untuk teks, suara, dan citra",
-      "Konteks percakapan jangka panjang",
-      "Persona yang bisa diatur per project",
-    ],
-    stat: "12.4M parameter aktif",
+    step: "02",
+    title: "CHAT WHATSAPP",
+    detail:
+      "Tekan tombol order — rincian paket otomatis terkirim ke WhatsApp admin, tidak perlu ketik ulang.",
   },
   {
-    index: "03",
-    name: "FORTRESS LAYER",
-    icon: ShieldCheck,
-    summary:
-      "Perlindungan berlapis untuk data, identitas, dan setiap transmisi yang melewati sistem.",
-    points: [
-      "Enkripsi end-to-end di semua kanal",
-      "Audit log realtime tanpa celah",
-      "Kontrol akses berbasis peran",
-    ],
-    stat: "0 insiden tercatat",
+    step: "03",
+    title: "BAYAR",
+    detail:
+      "Transfer bank, e-wallet, atau QRIS. Kirim bukti pembayaran ke chat yang sama.",
+  },
+  {
+    step: "04",
+    title: "LANGSUNG DIPAKAI",
+    detail:
+      "File, loader, dan panduan instalasi dikirim setelah pembayaran diverifikasi (±5 menit).",
   },
 ];
 
-const PROJECTS: {
-  name: string;
-  tagline: string;
-  stack: string[];
-  status: "ONLINE" | "BETA" | "LOCKED";
-  progress: number;
-}[] = [
+const PAYMENTS = ["BCA", "DANA", "GOPAY", "OVO", "SHOPEEPAY", "QRIS"];
+
+const FAQ: { question: string; answer: string }[] = [
   {
-    name: "VOCALOID-X PC",
-    tagline:
-      "Kernel utama yang menyatukan AI, manusia, dan data realtime dalam satu kesadaran digital.",
-    stack: ["TYPESCRIPT", "CONVEX", "REACT"],
-    status: "ONLINE",
-    progress: 94,
+    question: "Aman dipakai di akun utama?",
+    answer:
+      "Kami hanya merilis build yang sudah lolos uji internal dan selalu memperbarui signature setelah patch. Risiko tetap ada di setiap produk, jadi pakai dengan bijak.",
   },
   {
-    name: "VOCALOID-X MOBILE",
-    tagline:
-      "Jaringan komunitas anonim dengan enkripsi penuh dan identitas terdesentralisasi.",
-    stack: ["VITE", "WEBCRYPTO", "P2P"],
-    status: "BETA",
-    progress: 61,
+    question: "Emulator apa saja yang didukung?",
+    answer:
+      "Gameloop, BlueStacks, LDPlayer, dan MEmu di Windows 10/11 64-bit. Untuk setingan emulator kami tuning langsung lewat remote.",
   },
   {
-    name: "NEURAL-VOICE",
-    tagline:
-      "Sintesis suara realtime dengan emosi adaptif untuk karakter digital apa pun.",
-    stack: ["ONNX", "WEBAUDIO"],
-    status: "BETA",
-    progress: 48,
+    question: "Perlu instal ulang saat update?",
+    answer:
+      "Tidak. Cukup download loader terbaru dari link member yang kami kirim, config lama tetap dipakai.",
   },
   {
-    name: "ABYSS.WALLET",
-    tagline:
-      "Dompet digital dengan verifikasi biometrik dan pemulihan sosial tanpa seed phrase.",
-    stack: ["RUST", "WASM"],
-    status: "LOCKED",
-    progress: 22,
+    question: "Bisa refund?",
+    answer:
+      "Refund berlaku jika produk tidak dapat dijalankan setelah dibantu admin dan bukan karena salah penggunaan.",
   },
 ];
-
-const STATUS_STYLES: Record<string, string> = {
-  ONLINE: "border-[#4ade80]/40 text-[#7dffb0] bg-[#4ade80]/10",
-  BETA: "border-vx-ember/40 text-vx-ember bg-vx-ember/10",
-  LOCKED: "border-vx-red/35 text-vx-red bg-vx-red/10",
-};
 
 function Hero() {
   return (
@@ -200,19 +178,25 @@ function Hero() {
             className="xl:col-span-6"
           >
             <motion.div
-              variants={{ hidden: { opacity: 0, x: -18 }, show: { opacity: 1, x: 0 } }}
+              variants={{
+                hidden: { opacity: 0, x: -18 },
+                show: { opacity: 1, x: 0 },
+              }}
               className="vx-cut-sm inline-flex items-center gap-2 border border-vx-red/35 bg-vx-red/5 px-3 py-1.5"
             >
               <span className="vx-mono text-[10px] tracking-[0.3em] text-vx-red">
                 //
               </span>
               <span className="vx-mono text-[10px] tracking-[0.3em] text-rose-100/90">
-                WELCOME TO
+                TOKO RESMI OPEN ORDER
               </span>
             </motion.div>
 
             <motion.h1
-              variants={{ hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0 } }}
+              variants={{
+                hidden: { opacity: 0, y: 22 },
+                show: { opacity: 1, y: 0 },
+              }}
               transition={{ duration: 0.6 }}
               className="mt-6 font-display text-5xl leading-[0.95] font-black tracking-tight uppercase sm:text-6xl lg:text-7xl xl:text-[5.2rem]"
             >
@@ -222,45 +206,80 @@ function Hero() {
             </motion.h1>
 
             <motion.p
-              variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } }}
+              variants={{
+                hidden: { opacity: 0, y: 18 },
+                show: { opacity: 1, y: 0 },
+              }}
               className="mt-5 font-display text-base font-bold tracking-[0.32em] text-rose-100 sm:text-lg"
             >
-              CODE <span className="text-vx-red">×</span> DEMON{" "}
-              <span className="text-vx-red">×</span> FUTURE
+              CHEAT <span className="text-vx-red">×</span> SETTING FF PC{" "}
+              <span className="text-vx-red">×</span> EMULATOR
             </motion.p>
 
             <motion.p
-              variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } }}
+              variants={{
+                hidden: { opacity: 0, y: 18 },
+                show: { opacity: 1, y: 0 },
+              }}
               className="mt-6 max-w-xl text-base leading-relaxed text-rose-100/70 sm:text-lg"
             >
-              Bukan sekadar kode, tapi sebuah dunia di mana teknologi bertemu
-              dengan kegelapan. VOCALOID-X adalah simbol dari ambisi, inovasi,
-              dan kekuatan tanpa batas.
+              Katalog paket cheat PC dan setingan emulator Free Fire. Update
+              signature harian, config diracik ulang sampai nyaman, order
+              langsung lewat WhatsApp tanpa ribet.
             </motion.p>
 
             <motion.div
-              variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } }}
+              variants={{
+                hidden: { opacity: 0, y: 18 },
+                show: { opacity: 1, y: 0 },
+              }}
               className="mt-9 flex flex-wrap items-center gap-4"
             >
               <Button
-                asChild
+                type="button"
                 size="lg"
+                onClick={() => scrollToSection("produk")}
                 className="vx-cut vx-mono gap-2 px-7 text-[11px] tracking-[0.24em] shadow-[0_0_36px_-8px_rgba(255,42,69,0.9)]"
               >
-                <Link to="/dashboard">
-                  EXPLORE NOW
-                  <ArrowRight className="size-4" />
-                </Link>
+                <ShoppingBag className="size-4" />
+                LIHAT PRODUK
               </Button>
               <Button
-                type="button"
+                asChild
                 variant="outline"
                 size="lg"
-                onClick={() => scrollToSection("about")}
                 className="vx-cut vx-mono border-vx-red/40 bg-transparent px-7 text-[11px] tracking-[0.24em] text-rose-100 hover:border-vx-red/80 hover:bg-vx-red/10 hover:text-white"
               >
-                LEARN MORE
+                <a
+                  href={whatsappUrl(
+                    "Halo VOCALOID-X! Saya mau order paket cheat / setting FF PC.",
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="size-4" />
+                  ORDER VIA WA
+                </a>
               </Button>
+            </motion.div>
+
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 18 },
+                show: { opacity: 1, y: 0 },
+              }}
+              className="vx-mono mt-9 flex flex-wrap items-center gap-x-6 gap-y-2 text-[10px] tracking-[0.2em] text-muted-foreground"
+            >
+              {[
+                { icon: BadgeCheck, label: "PAKET TERKURASI" },
+                { icon: Clock, label: "ORDER < 5 MENIT" },
+                { icon: MessageCircle, label: `WA ${WHATSAPP_LABEL}` },
+              ].map((item) => (
+                <span key={item.label} className="inline-flex items-center gap-2">
+                  <item.icon className="size-3.5 text-vx-red" />
+                  {item.label}
+                </span>
+              ))}
             </motion.div>
           </motion.div>
 
@@ -274,10 +293,10 @@ function Hero() {
             <SystemMonitor />
             <div className="vx-cut-sm flex items-center justify-between border border-vx-red/25 bg-[#0a0509]/80 px-4 py-2.5">
               <span className="vx-mono text-[10px] tracking-[0.2em] text-muted-foreground">
-                BUILD v1.0.0
+                STATUS TOKO
               </span>
-              <span className="vx-mono text-[10px] tracking-[0.2em] text-vx-red">
-                FUTURE: UNLIMITED
+              <span className="vx-mono text-[10px] tracking-[0.2em] text-[#7dffb0]">
+                READY ORDER
               </span>
             </div>
           </motion.div>
@@ -286,52 +305,253 @@ function Hero() {
 
       <button
         type="button"
-        onClick={() => scrollToSection("about")}
+        onClick={() => scrollToSection("produk")}
         className="vx-mono absolute bottom-6 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-[10px] tracking-[0.3em] text-muted-foreground transition-colors hover:text-vx-red lg:flex"
       >
         <span className="flex size-8 items-center justify-center rounded-md border border-vx-red/40 text-vx-red">
           <ChevronDown className="size-4 animate-bounce" />
         </span>
-        SCROLL DOWN
+        LIHAT KATALOG
       </button>
     </section>
   );
 }
 
-function About() {
+function StatusPill({ status }: { status: ProductStatus }) {
+  return (
+    <span
+      className={cn(
+        "vx-mono rounded-sm border px-2 py-0.5 text-[9px] tracking-[0.24em]",
+        PRODUCT_STATUS_STYLES[status],
+      )}
+    >
+      {PRODUCT_STATUS_LABEL[status]}
+    </span>
+  );
+}
+
+function ProductCard({
+  product,
+  index,
+}: {
+  product: StoreProduct;
+  index: number;
+}) {
+  const locked = product.status !== "available";
+
+  return (
+    <motion.article
+      {...reveal}
+      transition={{ ...reveal.transition, delay: index * 0.06 }}
+      className="vx-panel vx-cut group relative flex flex-col p-5 transition-transform duration-300 hover:-translate-y-1.5"
+    >
+      <CornerBrackets className="opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+      <div className="flex items-start justify-between gap-3">
+        <StatusPill status={product.status} />
+        {product.badge && (
+          <span className="vx-mono inline-flex items-center gap-1 border border-vx-red/40 bg-vx-red/10 px-2 py-0.5 text-[9px] tracking-[0.2em] text-rose-100">
+            <Flame className="size-3 text-vx-red" />
+            {product.badge}
+          </span>
+        )}
+      </div>
+
+      <p className="vx-mono mt-4 text-[10px] tracking-[0.28em] text-vx-red/80">
+        {product.category}
+      </p>
+      <h3 className="mt-1.5 font-display text-lg font-bold tracking-[0.06em] text-rose-50">
+        {product.name}
+      </h3>
+      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        {product.tagline}
+      </p>
+
+      <div className="mt-5 flex items-end justify-between gap-3 border-t border-vx-red/15 pt-4">
+        <div>
+          <p className="vx-mono text-2xl font-bold text-vx-red">
+            {formatIDR(product.price)}
+          </p>
+          <p className="vx-mono mt-1 text-[10px] tracking-[0.2em] text-muted-foreground">
+            DURASI {product.duration}
+          </p>
+        </div>
+        <HexIcon className="h-10 w-10">
+          <Package className="size-4" />
+        </HexIcon>
+      </div>
+
+      <ul className="mt-5 space-y-2">
+        {product.features.map((feature) => (
+          <li key={feature} className="flex items-start gap-2">
+            <Check className="mt-0.5 size-3.5 shrink-0 text-vx-red" />
+            <span className="vx-mono text-[11px] leading-5 text-muted-foreground">
+              {feature}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {locked ? (
+        <Button
+          type="button"
+          variant="outline"
+          disabled
+          className="vx-cut vx-mono mt-6 w-full gap-2 text-[11px] tracking-[0.22em]"
+        >
+          {product.status === "sold_out" ? "STOK HABIS" : "SEGERA HADIR"}
+        </Button>
+      ) : (
+        <Button
+          asChild
+          className="vx-cut vx-mono mt-6 w-full gap-2 text-[11px] tracking-[0.22em]"
+        >
+          <a
+            href={whatsappUrl(productOrderMessage(product))}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <MessageCircle className="size-4" />
+            ORDER SEKARANG
+          </a>
+        </Button>
+      )}
+    </motion.article>
+  );
+}
+
+function Catalog() {
+  const live = useQuery(api.products.listPublic);
+  const [category, setCategory] = useState("SEMUA");
+
+  const catalog: StoreProduct[] = live && live.length > 0 ? live : DEFAULT_PRODUCTS;
+
+  const categories = useMemo(
+    () => ["SEMUA", ...Array.from(new Set(catalog.map((item) => item.category)))],
+    [catalog],
+  );
+
+  const visible = useMemo(
+    () =>
+      category === "SEMUA"
+        ? catalog
+        : catalog.filter((product) => product.category === category),
+    [catalog, category],
+  );
+
   return (
     <section
-      id="about"
+      id="produk"
       className="relative scroll-mt-20 border-t border-vx-red/15 bg-[#07040a] py-20 sm:py-24"
     >
       <div className="mx-auto w-full max-w-[1600px] px-5 sm:px-8">
-        <div className="grid gap-12 lg:grid-cols-12 lg:items-start lg:gap-10">
-          <motion.div {...reveal} className="lg:col-span-5">
-            <SectionLabel>// ABOUT VOCALOID-X</SectionLabel>
+        <motion.div
+          {...reveal}
+          className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+        >
+          <div>
+            <SectionLabel>// KATALOG PRODUK</SectionLabel>
             <h2 className="mt-5 font-display text-3xl leading-tight font-black uppercase sm:text-4xl lg:text-[2.9rem]">
-              MORE THAN JUST <span className="vx-glow text-vx-red">CODE</span>
+              PAKET <span className="vx-glow text-vx-red">SIAP ORDER</span>
             </h2>
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-rose-100/65">
-              VOCALOID-X adalah sebuah project yang menggabungkan teknologi,
-              kreativitas, dan dunia digital. Kami percaya bahwa masa depan
-              bukan hanya tentang manusia, tapi juga tentang bagaimana kita
-              berkolaborasi dengan AI dan sistem cerdas.
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => scrollToSection("features")}
-              className="vx-cut vx-mono mt-8 gap-2 border-vx-red/40 bg-transparent px-6 text-[11px] tracking-[0.22em] text-rose-100 hover:border-vx-red/80 hover:bg-vx-red/10 hover:text-white"
-            >
-              TENTANG KAMI
-              <ArrowRight className="size-4" />
-            </Button>
-            <p className="vx-mono mt-7 text-[10px] tracking-[0.26em] text-muted-foreground">
-              DEVELOPED BY <span className="text-vx-red">{DEVELOPER_NAME}</span>
-            </p>
-          </motion.div>
+          </div>
+          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+            Pilih paket, tekan order, dan rinciannya otomatis terkirim ke
+            WhatsApp admin. Semua paket termasuk panduan instalasi dan garansi
+            reset saat update game.
+          </p>
+        </motion.div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7 xl:grid-cols-4">
+        <motion.div {...reveal} className="mt-9 flex flex-wrap gap-2">
+          {categories.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setCategory(item)}
+              className={cn(
+                "vx-mono vx-cut-sm border px-3.5 py-1.5 text-[10px] tracking-[0.22em] transition-colors",
+                category === item
+                  ? "border-vx-red/70 bg-vx-red/15 text-rose-50"
+                  : "border-vx-red/20 bg-transparent text-muted-foreground hover:border-vx-red/50 hover:text-rose-100",
+              )}
+            >
+              {item}
+            </button>
+          ))}
+        </motion.div>
+
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {visible.map((product, index) => (
+            <ProductCard
+              key={product._id ?? product.name}
+              product={product}
+              index={index}
+            />
+          ))}
+        </div>
+
+        <motion.div
+          {...reveal}
+          className="vx-panel vx-cut mt-8 flex flex-col items-center justify-between gap-5 p-6 sm:flex-row"
+        >
+          <div className="flex items-center gap-4">
+            <HexIcon className="h-11 w-11">
+              <Sparkles className="size-5" />
+            </HexIcon>
+            <div>
+              <p className="font-display text-sm font-bold tracking-[0.1em] text-rose-50">
+                BUTUH PAKET KHUSUS?
+              </p>
+              <p className="vx-mono mt-1 text-[11px] text-muted-foreground">
+                Ceritakan device dan target rank Anda, admin racik paketnya.
+              </p>
+            </div>
+          </div>
+          <Button
+            asChild
+            variant="outline"
+            className="vx-cut vx-mono border-vx-red/40 bg-transparent gap-2 px-6 text-[11px] tracking-[0.22em] text-rose-100 hover:bg-vx-red/10 hover:text-white"
+          >
+            <a
+              href={whatsappUrl("Halo VOCALOID-X! Saya mau tanya paket custom.")}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <MessageCircle className="size-4" />
+              TANYA ADMIN
+            </a>
+          </Button>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function Advantages() {
+  return (
+    <section
+      id="keunggulan"
+      className="relative scroll-mt-20 border-t border-vx-red/15 py-20 sm:py-24"
+    >
+      <div className="mx-auto w-full max-w-[1600px] px-5 sm:px-8">
+        <motion.div
+          {...reveal}
+          className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+        >
+          <div>
+            <SectionLabel>// KEUNGGULAN</SectionLabel>
+            <h2 className="mt-5 font-display text-3xl leading-tight font-black uppercase sm:text-4xl lg:text-[2.9rem]">
+              KENAPA ORDER DI <span className="vx-glow text-vx-red">SINI</span>
+            </h2>
+          </div>
+          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+            Bukan sekadar jual file. Kami menjaga build tetap jalan setelah
+            setiap patch game dan menemani Anda sampai config-nya pas.
+          </p>
+        </motion.div>
+
+        <div className="mt-12 grid gap-5 lg:grid-cols-12">
+          <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
             {PILLARS.map((pillar, index) => (
               <motion.article
                 key={pillar.title}
@@ -352,96 +572,25 @@ function About() {
               </motion.article>
             ))}
           </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Features() {
-  return (
-    <section
-      id="features"
-      className="relative scroll-mt-20 border-t border-vx-red/15 py-20 sm:py-24"
-    >
-      <div className="mx-auto w-full max-w-[1600px] px-5 sm:px-8">
-        <motion.div
-          {...reveal}
-          className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
-        >
-          <div>
-            <SectionLabel>// CORE SYSTEMS</SectionLabel>
-            <h2 className="mt-5 font-display text-3xl leading-tight font-black uppercase sm:text-4xl lg:text-[2.9rem]">
-              TIGA LAPISAN <span className="vx-glow text-vx-red">KEKUATAN</span>
-            </h2>
-          </div>
-          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-            Setiap lapisan dirancang untuk saling menopang: mesin yang bergerak
-            cepat, kecerdasan yang memahami konteks, dan benteng yang tidak bisa
-            ditembus.
-          </p>
-        </motion.div>
-
-        <div className="mt-12 grid gap-5 lg:grid-cols-12">
-          <div className="space-y-5 lg:col-span-7">
-            {SYSTEMS.map((system, index) => (
-              <motion.article
-                key={system.name}
-                {...reveal}
-                transition={{ ...reveal.transition, delay: index * 0.08 }}
-                className="vx-panel vx-cut group p-6"
-              >
-                <div className="flex flex-wrap items-center gap-4">
-                  <HexIcon className="h-11 w-11">
-                    <system.icon className="size-5" />
-                  </HexIcon>
-                  <div>
-                    <p className="vx-mono text-[10px] tracking-[0.3em] text-vx-red/80">
-                      SYS-{system.index}
-                    </p>
-                    <h3 className="font-display text-lg font-bold tracking-[0.08em] text-rose-50">
-                      {system.name}
-                    </h3>
-                  </div>
-                  <span className="vx-mono ml-auto hidden text-[10px] tracking-[0.2em] text-muted-foreground sm:block">
-                    {system.stat}
-                  </span>
-                </div>
-                <p className="mt-4 text-sm leading-relaxed text-rose-100/65">
-                  {system.summary}
-                </p>
-                <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
-                  {system.points.map((point) => (
-                    <li key={point} className="flex items-start gap-2">
-                      <Zap className="mt-0.5 size-3.5 shrink-0 text-vx-red" />
-                      <span className="vx-mono text-[11px] leading-5 text-muted-foreground">
-                        {point}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.article>
-            ))}
-          </div>
 
           <motion.div {...reveal} className="lg:col-span-5">
             <SystemTerminal />
             <HudPanel
-              label="// PERFORMANCE"
+              label="// TRACK RECORD"
               className="mt-5"
               bodyClassName="space-y-3 px-4 py-4"
             >
               {[
-                { label: "UPTIME", value: 99.98, display: "99.98%" },
-                { label: "SECURITY", value: 96, display: "A+" },
-                { label: "SCALABILITY", value: 88, display: "∞" },
+                { label: "ORDER SUKSES", value: 99.4, display: "99.4%" },
+                { label: "RESPON CHAT", value: 97, display: "< 5 MIN" },
+                { label: "GARANSI", value: 100, display: "AKTIF" },
               ].map((row) => (
                 <div key={row.label} className="flex items-center gap-3">
-                  <span className="vx-mono w-24 text-[10px] tracking-[0.18em] text-muted-foreground">
+                  <span className="vx-mono w-28 text-[10px] tracking-[0.18em] text-muted-foreground">
                     {row.label}
                   </span>
                   <MeterBar value={row.value} className="flex-1" />
-                  <span className="vx-mono w-12 text-right text-[10px] text-vx-red">
+                  <span className="vx-mono w-16 text-right text-[10px] text-vx-red">
                     {row.display}
                   </span>
                 </div>
@@ -454,135 +603,95 @@ function Features() {
   );
 }
 
-function Projects() {
+function HowToOrder() {
   return (
     <section
-      id="projects"
+      id="cara-order"
       className="relative scroll-mt-20 border-t border-vx-red/15 bg-[#07040a] py-20 sm:py-24"
     >
       <div className="mx-auto w-full max-w-[1600px] px-5 sm:px-8">
-        <motion.div
-          {...reveal}
-          className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
-        >
-          <div>
-            <SectionLabel>// PROJECTS</SectionLabel>
-            <h2 className="mt-5 font-display text-3xl leading-tight font-black uppercase sm:text-4xl lg:text-[2.9rem]">
-              ACTIVE <span className="vx-glow text-vx-red">OPERATIONS</span>
-            </h2>
-          </div>
-          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-            Sebagian project sudah berjalan, sebagian masih terkunci di dalam
-            lab. Daftarkan project Anda sendiri dari console operator.
-          </p>
+        <motion.div {...reveal}>
+          <SectionLabel>// CARA ORDER</SectionLabel>
+          <h2 className="mt-5 font-display text-3xl leading-tight font-black uppercase sm:text-4xl lg:text-[2.9rem]">
+            EMPAT LANGKAH <span className="vx-glow text-vx-red">SELESAI</span>
+          </h2>
         </motion.div>
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {PROJECTS.map((project, index) => (
+          {ORDER_STEPS.map((item, index) => (
             <motion.article
-              key={project.name}
+              key={item.step}
               {...reveal}
               transition={{ ...reveal.transition, delay: index * 0.07 }}
-              className="vx-panel vx-cut group flex flex-col p-5 transition-transform duration-300 hover:-translate-y-1.5"
+              className="vx-panel vx-cut relative flex flex-col p-5"
             >
-              <div className="flex items-center justify-between">
-                <span
-                  className={cn(
-                    "vx-mono rounded-sm border px-2 py-0.5 text-[9px] tracking-[0.24em]",
-                    STATUS_STYLES[project.status],
-                  )}
-                >
-                  {project.status}
-                </span>
-                <Terminal className="size-4 text-vx-red/60" />
-              </div>
-
-              <h3 className="mt-5 font-display text-base font-bold tracking-[0.06em] text-rose-50">
-                {project.name}
+              <span className="font-display text-3xl font-black text-vx-red/25">
+                {item.step}
+              </span>
+              <h3 className="vx-mono mt-3 text-[12px] font-bold tracking-[0.16em] text-rose-50">
+                {item.title}
               </h3>
-              <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
-                {project.tagline}
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {item.detail}
               </p>
-
-              <div className="mt-5 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="vx-mono text-[9px] tracking-[0.2em] text-muted-foreground">
-                    PROGRESS
-                  </span>
-                  <span className="vx-mono text-[10px] text-vx-red">
-                    {project.progress}%
-                  </span>
-                </div>
-                <MeterBar value={project.progress} />
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-1.5">
-                {project.stack.map((tech) => (
-                  <span
-                    key={tech}
-                    className="vx-mono border border-vx-red/20 bg-vx-red/5 px-1.5 py-0.5 text-[9px] tracking-[0.16em] text-rose-100/70"
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
             </motion.article>
           ))}
         </div>
 
         <motion.div
           {...reveal}
-          className="vx-panel vx-cut mt-8 flex flex-col items-center justify-between gap-5 p-6 sm:flex-row"
+          className="vx-panel vx-cut mt-6 flex flex-wrap items-center gap-4 p-5"
         >
-          <div className="flex items-center gap-4">
-            <HexIcon className="h-11 w-11">
-              <Activity className="size-5" />
-            </HexIcon>
-            <div>
-              <p className="font-display text-sm font-bold tracking-[0.1em] text-rose-50">
-                PUNYA PROJECT SENDIRI?
-              </p>
-              <p className="vx-mono mt-1 text-[11px] text-muted-foreground">
-                Buka console operator dan daftarkan dalam hitungan detik.
-              </p>
-            </div>
+          <span className="vx-mono inline-flex items-center gap-2 text-[10px] tracking-[0.24em] text-muted-foreground">
+            <Wallet className="size-3.5 text-vx-red" />
+            METODE PEMBAYARAN
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {PAYMENTS.map((payment) => (
+              <span
+                key={payment}
+                className="vx-mono border border-vx-red/20 bg-vx-red/5 px-2.5 py-1 text-[10px] tracking-[0.18em] text-rose-100/80"
+              >
+                {payment}
+              </span>
+            ))}
           </div>
-          <Button
-            asChild
-            className="vx-cut vx-mono gap-2 px-6 text-[11px] tracking-[0.22em]"
-          >
-            <Link to="/dashboard">
-              BUKA CONSOLE
-              <ArrowRight className="size-4" />
-            </Link>
-          </Button>
         </motion.div>
       </div>
     </section>
   );
 }
 
-function ContactForm() {
-  const submitTransmission = useMutation(api.transmissions.submit);
+function OrderForm({ catalog }: { catalog: StoreProduct[] }) {
+  const submitOrder = useMutation(api.orders.submit);
+  const [productName, setProductName] = useState(catalog[0]?.name ?? "");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const selected = catalog.find((product) => product.name === productName);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
     const name = String(data.get("name") ?? "");
-    const email = String(data.get("email") ?? "");
-    const message = String(data.get("message") ?? "");
+    const contact = String(data.get("contact") ?? "");
+    const note = String(data.get("note") ?? "");
+    const price = selected?.price ?? 0;
 
     setIsSending(true);
     setError(null);
     try {
-      await submitTransmission({ name, email, message });
+      await submitOrder({ name, contact, productName, price, note });
       form.reset();
-      toast.success("TRANSMISI TERKIRIM // Operator akan segera merespon.");
+      window.open(
+        whatsappUrl(customOrderMessage({ name, productName, price, note })),
+        "_blank",
+        "noopener,noreferrer",
+      );
+      toast.success("ORDER DICATAT // Lanjutkan pembayaran di WhatsApp.");
     } catch (err) {
-      setError(formatConvexError(err, "Gagal mengirim transmisi. Coba lagi."));
+      setError(formatConvexError(err, "Gagal mengirim order. Coba lagi."));
     } finally {
       setIsSending(false);
     }
@@ -592,7 +701,7 @@ function ContactForm() {
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="block space-y-2">
-          <span className="vx-label block">// NAMA</span>
+          <span className="vx-label block">// NAMA / IGN</span>
           <Input
             name="name"
             required
@@ -603,29 +712,60 @@ function ContactForm() {
           />
         </label>
         <label className="block space-y-2">
-          <span className="vx-label block">// EMAIL</span>
+          <span className="vx-label block">// NO WHATSAPP</span>
           <Input
-            name="email"
-            type="email"
+            name="contact"
             required
+            minLength={9}
             disabled={isSending}
-            placeholder="operator@vocaloid-x.dev"
+            placeholder="0812xxxxxxx"
             className="vx-mono vx-cut-sm h-11 border-vx-red/25 bg-[#0a0509] text-sm placeholder:text-muted-foreground/60 focus-visible:border-vx-red/70"
           />
         </label>
       </div>
+
       <label className="block space-y-2">
-        <span className="vx-label block">// PESAN</span>
-        <Textarea
-          name="message"
-          required
-          minLength={10}
-          rows={5}
+        <span className="vx-label block">// PILIH PAKET</span>
+        <Select
+          value={productName}
+          onValueChange={setProductName}
           disabled={isSending}
-          placeholder="Ceritakan project atau ide yang ingin Anda bangun..."
+        >
+          <SelectTrigger className="vx-mono vx-cut-sm h-11 w-full border-vx-red/25 bg-[#0a0509] text-[12px] tracking-[0.12em]">
+            <SelectValue placeholder="Pilih paket" />
+          </SelectTrigger>
+          <SelectContent>
+            {catalog.map((product) => (
+              <SelectItem key={product.name} value={product.name}>
+                {product.name} — {formatIDR(product.price)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </label>
+
+      <label className="block space-y-2">
+        <span className="vx-label block">// CATATAN (OPSIONAL)</span>
+        <Textarea
+          name="note"
+          rows={4}
+          maxLength={500}
+          disabled={isSending}
+          placeholder="Contoh: pakai Gameloop 64-bit, RAM 8GB, butuh setting sensi."
           className="vx-mono vx-cut-sm border-vx-red/25 bg-[#0a0509] text-sm placeholder:text-muted-foreground/60 focus-visible:border-vx-red/70"
         />
       </label>
+
+      {selected && (
+        <div className="vx-cut-sm flex flex-wrap items-center justify-between gap-2 border border-vx-red/25 bg-vx-red/5 px-4 py-3">
+          <span className="vx-mono text-[10px] tracking-[0.2em] text-muted-foreground">
+            TOTAL {selected.category}
+          </span>
+          <span className="vx-mono text-sm font-bold text-vx-red">
+            {formatIDR(selected.price)}
+          </span>
+        </div>
+      )}
 
       {error && (
         <p className="vx-mono border border-vx-red/40 bg-vx-red/10 px-3 py-2 text-[11px] tracking-[0.1em] text-rose-200">
@@ -639,51 +779,56 @@ function ContactForm() {
         disabled={isSending}
         className="vx-cut vx-mono w-full gap-2 text-[11px] tracking-[0.24em] shadow-[0_0_36px_-10px_rgba(255,42,69,0.9)] sm:w-auto sm:px-8"
       >
-        {isSending ? "MENGIRIM..." : "KIRIM TRANSMISI"}
-        <Send className="size-4" />
+        {isSending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <MessageCircle className="size-4" />
+        )}
+        {isSending ? "MEMPROSES..." : "KIRIM & LANJUT KE WHATSAPP"}
       </Button>
     </form>
   );
 }
 
-function Contact() {
+function Order() {
+  const live = useQuery(api.products.listPublic);
+  const catalog: StoreProduct[] = live && live.length > 0 ? live : DEFAULT_PRODUCTS;
+
   return (
     <section
-      id="contact"
+      id="order"
       className="relative scroll-mt-20 border-t border-vx-red/15 py-20 sm:py-24"
     >
       <div className="mx-auto w-full max-w-[1600px] px-5 sm:px-8">
         <div className="grid gap-8 lg:grid-cols-12">
           <motion.div {...reveal} className="lg:col-span-7">
-            <HudPanel label="// CONTACT CHANNEL" bodyClassName="p-6 sm:p-8">
-              <SectionLabel>// KIRIM TRANSMISI</SectionLabel>
+            <HudPanel label="// FORM ORDER" bodyClassName="p-6 sm:p-8">
+              <SectionLabel>// CHECKOUT VIA WHATSAPP</SectionLabel>
               <h2 className="mt-5 font-display text-3xl leading-tight font-black uppercase sm:text-4xl">
-                BICARA DENGAN <span className="vx-glow text-vx-red">SISTEM</span>
+                ISI DATA, CHAT{" "}
+                <span className="vx-glow text-vx-red">TERBUKA</span>
               </h2>
               <p className="mt-4 max-w-xl text-sm leading-relaxed text-rose-100/65">
-                Punya ide project, kolaborasi, atau pertanyaan teknis? Kirim
-                transmisi Anda — pesannya langsung masuk ke console operator
-                VOCALOID-X.
+                Order Anda tercatat otomatis di console operator, lalu WhatsApp
+                terbuka dengan rincian paket yang sudah lengkap. Tidak perlu
+                mengetik ulang.
               </p>
               <div className="mt-8">
-                <ContactForm />
+                <OrderForm catalog={catalog} />
               </div>
             </HudPanel>
           </motion.div>
 
           <motion.div {...reveal} className="space-y-5 lg:col-span-5">
-            <HudPanel
-              label="// CHANNEL INFO"
-              bodyClassName="space-y-4 px-5 py-5"
-            >
+            <HudPanel label="// CHANNEL ORDER" bodyClassName="space-y-4 px-5 py-5">
               {[
-                { icon: Mail, label: "EMAIL", value: "hello@vocaloid-x.dev" },
-                { icon: Clock, label: "RESPON", value: "< 24 jam kerja" },
-                { icon: MapPin, label: "BASE", value: "Subang, Jawa Barat" },
-                { icon: Globe, label: "ZONA WAKTU", value: "GMT+7 // 24/7 online" },
+                { icon: MessageCircle, label: "WHATSAPP", value: WHATSAPP_LABEL },
+                { icon: Clock, label: "ADMIN ONLINE", value: OPERATIONAL_HOURS },
+                { icon: MapPin, label: "BASE", value: STORE_CITY },
+                { icon: Zap, label: "PENGIRIMAN", value: "< 5 menit setelah bayar" },
               ].map((row) => (
                 <div key={row.label} className="flex items-center gap-3">
-                  <span className="flex size-9 shrink-0 items-center justify-center border border-vx-red/25 bg-vx-red/5 text-vx-red vx-cut-sm">
+                  <span className="vx-cut-sm flex size-9 shrink-0 items-center justify-center border border-vx-red/25 bg-vx-red/5 text-vx-red">
                     <row.icon className="size-4" />
                   </span>
                   <div>
@@ -694,14 +839,43 @@ function Contact() {
                   </div>
                 </div>
               ))}
+              <Button
+                asChild
+                className="vx-cut vx-mono w-full gap-2 text-[11px] tracking-[0.22em]"
+              >
+                <a
+                  href={whatsappUrl("Halo VOCALOID-X! Saya mau tanya-tanya dulu.")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="size-4" />
+                  CHAT ADMIN SEKARANG
+                </a>
+              </Button>
             </HudPanel>
 
-            <HudPanel label="// SECURITY" bodyClassName="px-5 py-5">
+            <HudPanel label="// FAQ" bodyClassName="space-y-4 px-5 py-5">
+              {FAQ.map((item) => (
+                <div
+                  key={item.question}
+                  className="border-l-2 border-vx-red/30 pl-3"
+                >
+                  <p className="vx-mono text-[11px] tracking-[0.08em] text-rose-50">
+                    {item.question}
+                  </p>
+                  <p className="mt-1.5 text-[12px] leading-5 text-muted-foreground">
+                    {item.answer}
+                  </p>
+                </div>
+              ))}
+            </HudPanel>
+
+            <HudPanel label="// MEMBER AREA" bodyClassName="px-5 py-5">
               <div className="flex items-center gap-3">
                 <Lock className="size-4 text-vx-red" />
                 <p className="vx-mono text-[11px] leading-5 text-muted-foreground">
-                  Setiap transmisi terenkripsi dan hanya dapat dibaca oleh
-                  operator yang terautentikasi.
+                  Punya akses operator? Masuk ke console untuk mengelola
+                  katalog dan memproses order yang masuk.
                 </p>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -709,7 +883,7 @@ function Contact() {
                   to="/auth?returnTo=%2Fdashboard"
                   className="vx-mono vx-cut-sm border border-vx-red/30 bg-vx-red/5 px-3 py-1.5 text-[10px] tracking-[0.2em] text-rose-100 transition-colors hover:border-vx-red/70 hover:text-vx-red"
                 >
-                  MASUK SEBAGAI OPERATOR
+                  MASUK OPERATOR
                 </Link>
                 <Link
                   to="/dashboard"
@@ -735,10 +909,10 @@ export default function Landing() {
       <SideRail active={active} />
       <main className="xl:pl-60">
         <Hero />
-        <About />
-        <Features />
-        <Projects />
-        <Contact />
+        <Catalog />
+        <Advantages />
+        <HowToOrder />
+        <Order />
         <SiteFooter />
       </main>
     </div>

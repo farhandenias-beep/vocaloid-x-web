@@ -32,31 +32,39 @@ const schema = defineSchema(
       role: v.optional(roleValidator), // role of the user. do not remove
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
-    // projects published by the signed in operator (VOCALOID-X console)
-    projects: defineTable({
+    // digital products sold in the VOCALOID-X store, managed from the console
+    products: defineTable({
       userId: v.id("users"),
       name: v.string(),
+      category: v.string(),
       tagline: v.string(),
-      stack: v.array(v.string()),
+      price: v.number(),
+      duration: v.string(),
+      features: v.array(v.string()),
       status: v.union(
-        v.literal("online"),
-        v.literal("beta"),
-        v.literal("locked"),
+        v.literal("available"),
+        v.literal("sold_out"),
+        v.literal("coming_soon"),
       ),
-      progress: v.number(),
-      createdAt: v.number(),
-    }).index("by_user", ["userId"]),
-
-    // contact form messages sent from the landing page
-    transmissions: defineTable({
-      name: v.string(),
-      email: v.string(),
-      message: v.string(),
-      status: v.union(v.literal("new"), v.literal("read")),
+      badge: v.optional(v.string()),
+      sortOrder: v.number(),
       createdAt: v.number(),
     })
-      .index("by_email", ["email"])
-      .index("by_status", ["status"]),
+      .index("by_user", ["userId"])
+      .index("by_sort", ["sortOrder"]),
+
+    // order intents captured from the landing page before WhatsApp handoff
+    orders: defineTable({
+      name: v.string(),
+      contact: v.string(),
+      productName: v.string(),
+      price: v.number(),
+      note: v.optional(v.string()),
+      status: v.union(v.literal("new"), v.literal("done")),
+      createdAt: v.number(),
+    })
+      .index("by_status", ["status"])
+      .index("by_created", ["createdAt"]),
   },
   {
     schemaValidation: false,

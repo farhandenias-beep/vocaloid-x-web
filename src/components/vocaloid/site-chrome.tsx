@@ -17,22 +17,26 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
-import { DEVELOPER_NAME } from "@/lib/brand";
+import {
+  DEVELOPER_NAME,
+  STORE_TAGLINE,
+  WHATSAPP_LABEL,
+  whatsappUrl,
+} from "@/lib/brand";
 import { scrollToSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
 import {
-  FolderKanban,
-  Github,
   Home,
-  Info,
   Instagram,
   Layers,
+  ListOrdered,
   LogOut,
-  Mail,
   Menu,
   MessageCircle,
+  Music2,
   Settings,
-  Twitter,
+  ShieldCheck,
+  ShoppingBag,
   Youtube,
   type LucideIcon,
 } from "lucide-react";
@@ -40,10 +44,10 @@ import { Link, useNavigate } from "react-router";
 
 export const NAV_ITEMS: { id: string; label: string; icon: LucideIcon }[] = [
   { id: "home", label: "HOME", icon: Home },
-  { id: "about", label: "ABOUT", icon: Info },
-  { id: "features", label: "FEATURES", icon: Layers },
-  { id: "projects", label: "PROJECTS", icon: FolderKanban },
-  { id: "contact", label: "CONTACT", icon: Mail },
+  { id: "produk", label: "PRODUK", icon: ShoppingBag },
+  { id: "keunggulan", label: "KEUNGGULAN", icon: ShieldCheck },
+  { id: "cara-order", label: "CARA ORDER", icon: ListOrdered },
+  { id: "order", label: "ORDER", icon: MessageCircle },
 ];
 
 const DASHBOARD_HREF = "/dashboard";
@@ -138,7 +142,7 @@ export function SiteNav({ active }: { active: string }) {
                 onClick={() => navigate(DASHBOARD_HREF)}
               >
                 <Layers className="mr-2 size-4" />
-                Operator console
+                Store console
               </DropdownMenuItem>
               {isAuthenticated ? (
                 <DropdownMenuItem
@@ -300,11 +304,14 @@ export function SideRail({ active }: { active: string }) {
 }
 
 const SOCIALS: { icon: LucideIcon; label: string; href: string }[] = [
-  { icon: MessageCircle, label: "Discord", href: "https://discord.com" },
-  { icon: Youtube, label: "YouTube", href: "https://youtube.com" },
-  { icon: Github, label: "GitHub", href: "https://github.com" },
-  { icon: Twitter, label: "X", href: "https://x.com" },
+  {
+    icon: MessageCircle,
+    label: "WhatsApp",
+    href: whatsappUrl("Halo VOCALOID-X! Saya mau order."),
+  },
   { icon: Instagram, label: "Instagram", href: "https://instagram.com" },
+  { icon: Music2, label: "TikTok", href: "https://tiktok.com" },
+  { icon: Youtube, label: "YouTube", href: "https://youtube.com" },
 ];
 
 export function SiteFooter() {
@@ -312,13 +319,14 @@ export function SiteFooter() {
     <footer className="relative border-t border-vx-red/20 bg-[#07040a]/90">
       <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-vx-red/70 to-transparent" />
       <div className="flex flex-col gap-8 px-6 py-10 lg:flex-row lg:items-center lg:justify-between">
+        {/* storefront footer */}
         <div className="flex items-center gap-5">
           <LogoMark className="h-9 w-9" />
           <div>
             <LogoLockup />
             <p className="vx-mono mt-2 text-[11px] tracking-[0.2em] text-muted-foreground">
-              CODE THE FUTURE <span className="text-vx-red">//</span> BEYOND
-              LIMITS
+              {STORE_TAGLINE} <span className="text-vx-red">//</span> WA{" "}
+              {WHATSAPP_LABEL}
             </p>
           </div>
         </div>
