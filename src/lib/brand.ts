@@ -38,4 +38,4 @@ export const INSTAGRAM_URL = "https://instagram.com";
 export const YOUTUBE_URL = "https://youtube.com";
 
 /** Contoh: "https://www.tiktok.com/@username". Kosongkan untuk menyembunyikan. */
-export const TIKTOK_URL = "";
+export const TIKTOK_URL = "https://www.tiktok.com/@frhanlvly0";
