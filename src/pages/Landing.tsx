@@ -37,6 +37,7 @@ import {
   PRODUCT_STATUS_LABEL,
   PRODUCT_STATUS_STYLES,
   customOrderMessage,
+  discountPercent,
   formatIDR,
   productOrderMessage,
   type ProductStatus,
@@ -53,6 +54,7 @@ import {
   Clock,
   Flame,
   Headset,
+  Image as ImageIcon,
   Loader2,
   Lock,
   MapPin,
@@ -71,7 +73,15 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
-const SECTION_IDS = ["home", "produk", "keunggulan", "cara-order", "testimoni", "order"];
+const SECTION_IDS = [
+  "home",
+  "produk",
+  "keunggulan",
+  "bukti",
+  "testimoni",
+  "cara-order",
+  "order",
+];
 
 const reveal = {
   initial: { opacity: 0, y: 26 },
@@ -377,6 +387,16 @@ function ProductCard({
 
       <div className="mt-5 flex items-end justify-between gap-3 border-t border-vx-red/15 pt-4">
         <div>
+          {discountPercent(product) > 0 && (
+            <p className="vx-mono text-[11px] font-bold text-muted-foreground">
+              <span className="line-through decoration-vx-red/80">
+                {formatIDR(product.compareAtPrice as number)}
+              </span>{" "}
+              <span className="text-vx-ember">
+                -{discountPercent(product)}%
+              </span>
+            </p>
+          )}
           <p className="vx-mono text-2xl font-bold text-vx-red">
             {formatIDR(product.price)}
           </p>
@@ -605,6 +625,81 @@ function Advantages() {
               ))}
             </HudPanel>
           </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const PROOF_SHOTS: { src: string; title: string; caption: string }[] = [
+  {
+    src: "/proof/proof-1.jpg",
+    title: "CHEAT PC // IN-GAME",
+    caption: "Aimbot + ESP aktif, FPS stabil saat push rank.",
+  },
+  {
+    src: "/proof/proof-2.jpg",
+    title: "SETTING EMULATOR // 240 FPS",
+    caption: "Gameloop tuned: sensi, DPI, dan config grafis.",
+  },
+  {
+    src: "/proof/proof-3.jpg",
+    title: "RESULT // BOOYAH",
+    caption: "Build stabil sampai akhir match tanpa kendala.",
+  },
+];
+
+function ProofGallery() {
+  return (
+    <section
+      id="bukti"
+      className="relative scroll-mt-20 border-t border-vx-red/15 py-20 sm:py-24"
+    >
+      <div className="mx-auto w-full max-w-[1600px] px-5 sm:px-8">
+        <motion.div
+          {...reveal}
+          className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+        >
+          <div>
+            <SectionLabel>// BUKTI SETUP</SectionLabel>
+            <h2 className="mt-5 font-display text-3xl leading-tight font-black uppercase sm:text-4xl lg:text-[2.9rem]">
+              HASIL NYATA, <span className="vx-glow text-vx-red">BUKAN JANJI</span>
+            </h2>
+          </div>
+          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+            Screenshot langsung dari sesi setup dan push rank — hasil konfigurasi
+            cheat PC dan setingan emulator VOCALOID-X.
+          </p>
+        </motion.div>
+
+        <div className="mt-12 grid gap-5 md:grid-cols-3">
+          {PROOF_SHOTS.map((shot, index) => (
+            <motion.figure
+              key={shot.title}
+              {...reveal}
+              transition={{ ...reveal.transition, delay: index * 0.08 }}
+              className="vx-panel vx-cut group overflow-hidden"
+            >
+              <div className="relative aspect-video overflow-hidden bg-[#0a0509]">
+                <img
+                  src={shot.src}
+                  alt={shot.title}
+                  loading="lazy"
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                  }}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#07040a]/85 via-transparent to-transparent" />
+                <span className="vx-mono absolute bottom-2 left-3 text-[9px] tracking-[0.22em] text-rose-100/80">
+                  {shot.title}
+                </span>
+              </div>
+              <figcaption className="p-4 text-sm leading-relaxed text-muted-foreground">
+                {shot.caption}
+              </figcaption>
+            </motion.figure>
+          ))}
         </div>
       </div>
     </section>
@@ -1072,6 +1167,7 @@ export default function Landing() {
         <Hero />
         <Catalog />
         <Advantages />
+        <ProofGallery />
         <Testimonials />
         <HowToOrder />
         <Order />

@@ -47,6 +47,8 @@ const schema = defineSchema(
         v.literal("coming_soon"),
       ),
       badge: v.optional(v.string()),
+      // flash sale: original price crossed out on the storefront while promo runs
+      compareAtPrice: v.optional(v.number()),
       sortOrder: v.number(),
       createdAt: v.number(),
     })

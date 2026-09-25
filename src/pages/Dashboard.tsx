@@ -31,6 +31,8 @@ import {
 import { cn, formatConvexError } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import {
+  Bell,
+  BellRing,
   ChefHat,
   Download,
   Inbox,
@@ -39,9 +41,11 @@ import {
   MessageCircle,
   MessageSquareQuote,
   Package,
+  Pencil,
   Plus,
   QrCode,
   Save,
+  Search,
   ShoppingBag,
   Sparkles,
   Star,
@@ -50,8 +54,16 @@ import {
   Upload,
   UserRound,
   Wallet,
+  X,
 } from "lucide-react";
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -67,6 +79,41 @@ function timeAgo(timestamp: number) {
 /** Turns a local 08xx number into an international wa.me link. */
 function contactLink(contact: string, message: string) {
   return `https://wa.me/${normalizeWhatsApp(contact)}?text=${encodeURIComponent(message)}`;
+}
+
+/** Short two-tone chime for incoming orders (no audio file needed). */
+function playChime() {
+  try {
+    type WindowWithWebkit = Window & {
+      webkitAudioContext?: typeof AudioContext;
+    };
+    const Ctor =
+      typeof window === "undefined"
+        ? undefined
+        : (window.AudioContext ?? (window as WindowWithWebkit).webkitAudioContext);
+    if (!Ctor) return;
+    const ctx = new Ctor();
+    const now = ctx.currentTime;
+    [
+      { freq: 880, at: 0 },
+      { freq: 1245, at: 0.16 },
+    ].forEach(({ freq, at }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, now + at);
+      gain.gain.exponentialRampToValueAtTime(0.16, now + at + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + at + 0.28);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + at);
+      osc.stop(now + at + 0.3);
+    });
+    setTimeout(() => void ctx.close(), 1200);
+  } catch {
+    // Audio not available — stay silent.
+  }
 }
 
 function ConsoleHeader() {
@@ -136,6 +183,7 @@ function ProductManager({
   products: Doc<"products">[] | undefined;
 }) {
   const createProduct = useMutation(api.products.create);
+  const updateProduct = useMutation(api.products.update);
   const removeProduct = useMutation(api.products.remove);
   const updateStatus = useMutation(api.products.setStatus);
   const seedProducts = useMutation(api.products.seed);
@@ -144,6 +192,22 @@ function ProductManager({
   const [category, setCategory] = useState(PRODUCT_CATEGORIES[0]);
   const [isSaving, setIsSaving] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
+
+  // Inline edit state — one product at a time
+  const [editingId, setEditingId] = useState<Id<"products"> | null>(null);
+  const [editStatus, setEditStatus] = useState<ProductStatus>("available");
+  const [editCategory, setEditCategory] = useState(PRODUCT_CATEGORIES[0]);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const closeEdit = () => {
+    setEditingId(null);
+  };
+
+  const openEdit = (product: Doc<"products">) => {
+    setEditingId(product._id);
+    setEditStatus(product.status);
+    setEditCategory(product.category);
+  };
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -198,9 +262,39 @@ function ProductManager({
   const handleRemove = async (productId: Id<"products">) => {
     try {
       await removeProduct({ productId });
+      if (editingId === productId) closeEdit();
       toast.success("PAKET DIHAPUS.");
     } catch (error) {
       toast.error(formatConvexError(error, "Gagal menghapus paket."));
+    }
+  };
+
+  const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingId) return;
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const rawCompare = String(data.get("compareAtPrice") ?? "").trim();
+    setIsUpdating(true);
+    try {
+      await updateProduct({
+        productId: editingId,
+        name: String(data.get("name") ?? ""),
+        category: editCategory,
+        tagline: String(data.get("tagline") ?? ""),
+        price: Number(data.get("price") ?? 0),
+        duration: String(data.get("duration") ?? ""),
+        features: String(data.get("features") ?? ""),
+        status: editStatus,
+        badge: String(data.get("badge") ?? ""),
+        compareAtPrice: rawCompare ? Number(rawCompare) : undefined,
+      });
+      closeEdit();
+      toast.success("PAKET DIPERBARUI // Katalog tersinkron.");
+    } catch (error) {
+      toast.error(formatConvexError(error, "Gagal memperbarui paket."));
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -397,8 +491,23 @@ function ProductManager({
                     {product.category}
                   </span>
                   <span className="vx-mono ml-auto text-[12px] font-bold text-vx-red">
+                    {product.compareAtPrice ? (
+                      <span className="mr-2 text-[10px] font-normal text-muted-foreground line-through">
+                        {formatIDR(product.compareAtPrice)}
+                      </span>
+                    ) : null}
                     {formatIDR(product.price)}
                   </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Edit ${product.name}`}
+                    onClick={() => openEdit(product)}
+                    className="size-8 text-muted-foreground hover:bg-vx-red/10 hover:text-rose-100"
+                  >
+                    <Pencil className="size-4" />
+                  </Button>
                   <Button
                     type="button"
                     variant="ghost"
@@ -438,6 +547,179 @@ function ProductManager({
                     </span>
                   )}
                 </div>
+
+                {editingId === product._id && (
+                  <form
+                    onSubmit={handleUpdate}
+                    className="mt-4 space-y-4 border border-vx-red/30 bg-[#0a0509] p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="vx-label">// EDIT PAKET</span>
+                      <button
+                        type="button"
+                        onClick={closeEdit}
+                        aria-label="Tutup form edit"
+                        className="vx-mono text-[10px] tracking-[0.2em] text-muted-foreground transition-colors hover:text-vx-red"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label className="block space-y-2">
+                        <span className="vx-label block">// NAMA PAKET</span>
+                        <Input
+                          name="name"
+                          required
+                          minLength={2}
+                          maxLength={60}
+                          defaultValue={product.name}
+                          disabled={isUpdating}
+                          className="vx-mono vx-cut-sm h-11 border-vx-red/25 bg-[#050407] text-sm focus-visible:border-vx-red/70"
+                        />
+                      </label>
+                      <label className="block space-y-2">
+                        <span className="vx-label block">// HARGA PROMO (RP)</span>
+                        <Input
+                          name="price"
+                          type="number"
+                          min={0}
+                          step={1000}
+                          required
+                          defaultValue={product.price}
+                          disabled={isUpdating}
+                          className="vx-mono vx-cut-sm h-11 border-vx-red/25 bg-[#050407] text-sm focus-visible:border-vx-red/70"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <label className="block space-y-2">
+                        <span className="vx-label block">// KATEGORI</span>
+                        <Select
+                          value={editCategory}
+                          onValueChange={setEditCategory}
+                          disabled={isUpdating}
+                        >
+                          <SelectTrigger className="vx-mono vx-cut-sm h-11 w-full border-vx-red/25 bg-[#050407] text-[11px] tracking-[0.16em]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PRODUCT_CATEGORIES.map((item) => (
+                              <SelectItem key={item} value={item}>
+                                {item}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </label>
+                      <label className="block space-y-2">
+                        <span className="vx-label block">// DURASI</span>
+                        <Input
+                          name="duration"
+                          defaultValue={product.duration}
+                          disabled={isUpdating}
+                          className="vx-mono vx-cut-sm h-11 border-vx-red/25 bg-[#050407] text-sm focus-visible:border-vx-red/70"
+                        />
+                      </label>
+                      <label className="block space-y-2">
+                        <span className="vx-label block">// BADGE</span>
+                        <Input
+                          name="badge"
+                          maxLength={20}
+                          defaultValue={product.badge ?? ""}
+                          disabled={isUpdating}
+                          className="vx-mono vx-cut-sm h-11 border-vx-red/25 bg-[#050407] text-sm focus-visible:border-vx-red/70"
+                        />
+                      </label>
+                    </div>
+
+                    <label className="block space-y-2">
+                      <span className="vx-label block">// DESKRIPSI SINGKAT</span>
+                      <Textarea
+                        name="tagline"
+                        rows={2}
+                        maxLength={220}
+                        defaultValue={product.tagline}
+                        disabled={isUpdating}
+                        className="vx-mono vx-cut-sm border-vx-red/25 bg-[#050407] text-sm focus-visible:border-vx-red/70"
+                      />
+                    </label>
+
+                    <label className="block space-y-2">
+                      <span className="vx-label block">
+                        // FITUR (SATU PER BARIS / PISAH KOMA)
+                      </span>
+                      <Textarea
+                        name="features"
+                        rows={3}
+                        defaultValue={product.features.join("\n")}
+                        disabled={isUpdating}
+                        className="vx-mono vx-cut-sm border-vx-red/25 bg-[#050407] text-sm focus-visible:border-vx-red/70"
+                      />
+                    </label>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Select
+                        value={editStatus}
+                        onValueChange={(value) => setEditStatus(value as ProductStatus)}
+                        disabled={isUpdating}
+                      >
+                        <SelectTrigger className="vx-mono vx-cut-sm h-11 w-[170px] border-vx-red/25 bg-[#050407] text-[11px] tracking-[0.18em]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(
+                            ["available", "sold_out", "coming_soon"] as ProductStatus[]
+                          ).map((item) => (
+                            <SelectItem key={item} value={item}>
+                              {PRODUCT_STATUS_LABEL[item]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <label className="block space-y-2">
+                        <span className="vx-label block">// HARGA CORET (FLASH SALE)</span>
+                        <Input
+                          name="compareAtPrice"
+                          type="number"
+                          min={0}
+                          step={1000}
+                          placeholder="Kosong = tanpa promo"
+                          defaultValue={product.compareAtPrice ?? ""}
+                          disabled={isUpdating}
+                          className="vx-mono vx-cut-sm h-11 w-[210px] border-vx-ember/40 bg-[#050407] text-sm focus-visible:border-vx-ember/70"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 pt-1">
+                      <Button
+                        type="submit"
+                        disabled={isUpdating}
+                        className="vx-cut vx-mono gap-2 text-[11px] tracking-[0.22em]"
+                      >
+                        {isUpdating ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Save className="size-4" />
+                        )}
+                        SIMPAN PERUBAHAN
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={closeEdit}
+                        disabled={isUpdating}
+                        className="vx-cut vx-mono border-vx-red/35 bg-transparent gap-2 text-[11px] tracking-[0.18em] text-rose-100 hover:bg-vx-red/10 hover:text-white"
+                      >
+                        <X className="size-4" />
+                        BATALKAN
+                      </Button>
+                    </div>
+                  </form>
+                )}
               </li>
             ))}
           </ul>
@@ -614,6 +896,23 @@ function OrderInbox({ orders }: { orders: Doc<"orders">[] | undefined }) {
   const setStatus = useMutation(api.orders.setStatus);
   const removeOrder = useMutation(api.orders.remove);
 
+  const [statusFilter, setStatusFilter] = useState<"all" | "new" | "done">("all");
+  const [search, setSearch] = useState("");
+  const query = search.trim().toLowerCase();
+
+  const visible = useMemo(() => {
+    if (!orders) return [];
+    return orders.filter((order) => {
+      if (statusFilter !== "all" && order.status !== statusFilter) return false;
+      if (!query) return true;
+      return (
+        order.name.toLowerCase().includes(query) ||
+        order.contact.toLowerCase().includes(query) ||
+        order.productName.toLowerCase().includes(query)
+      );
+    });
+  }, [orders, statusFilter, query]);
+
   const handleStatus = async (orderId: Id<"orders">, status: "new" | "done") => {
     try {
       await setStatus({ orderId, status });
@@ -641,6 +940,39 @@ function OrderInbox({ orders }: { orders: Doc<"orders">[] | undefined }) {
       }
       bodyClassName="p-5"
     >
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {(
+          [
+            { value: "all" as const, label: "SEMUA" },
+            { value: "new" as const, label: "BARU" },
+            { value: "done" as const, label: "SELESAI" },
+          ]
+        ).map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            onClick={() => setStatusFilter(tab.value)}
+            className={cn(
+              "vx-mono vx-cut-sm border px-3 py-1.5 text-[10px] tracking-[0.2em] transition-colors",
+              statusFilter === tab.value
+                ? "border-vx-red/70 bg-vx-red/15 text-rose-50"
+                : "border-vx-red/20 text-muted-foreground hover:border-vx-red/50 hover:text-rose-100",
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+        <label className="relative ml-auto">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-vx-red/70" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Cari nama / paket / nomor..."
+            className="vx-mono vx-cut-sm h-9 w-[220px] border-vx-red/25 bg-[#0a0509] pl-8 text-[12px] focus-visible:border-vx-red/70"
+          />
+        </label>
+      </div>
+
       {orders === undefined ? (
         <div className="flex items-center gap-2 py-4 text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
@@ -651,9 +983,13 @@ function OrderInbox({ orders }: { orders: Doc<"orders">[] | undefined }) {
           Belum ada order. Setiap pengisian form order di landing page akan
           tercatat di sini sebelum pembeli lanjut ke WhatsApp.
         </p>
+      ) : visible.length === 0 ? (
+        <p className="vx-mono py-3 text-[11px] leading-5 text-muted-foreground">
+          Tidak ada order yang cocok dengan filter/pencarian.
+        </p>
       ) : (
         <ul className="space-y-4">
-          {orders.map((order) => (
+          {visible.map((order) => (
             <li
               key={order._id}
               className={cn(
@@ -943,6 +1279,39 @@ export default function Dashboard() {
   const potentialRevenue = newOrders.reduce((total, order) => total + order.price, 0);
   const initials = (user?.name ?? user?.email ?? "VX").slice(0, 2).toUpperCase();
 
+  // Order masuk: toast + chime setiap ada order "new" yang belum terlihat.
+  const seenNewRef = useRef<Set<string>>(new Set());
+  const hasSyncedRef = useRef(false);
+
+  useEffect(() => {
+    if (orders === undefined) return;
+    const currentNew = new Set(
+      orders.filter((order) => order.status === "new").map((order) => order._id),
+    );
+
+    if (!hasSyncedRef.current) {
+      // Baseline saat console pertama dibuka — jangan berbunyi untuk order lama.
+      seenNewRef.current = currentNew;
+      hasSyncedRef.current = true;
+      return;
+    }
+
+    const fresh = orders.filter(
+      (order) => order.status === "new" && !seenNewRef.current.has(order._id),
+    );
+    if (fresh.length > 0) {
+      playChime();
+      fresh.forEach((order) => {
+        toast.success(`ORDER BARU // ${order.name} — ${order.productName}`, {
+          description: `${formatIDR(order.price)} • proses di ORDER INBOX.`,
+          duration: 10000,
+        });
+      });
+    }
+
+    seenNewRef.current = currentNew;
+  }, [orders]);
+
   return (
     <div className="relative min-h-screen bg-background text-foreground">
       <div className="vx-grid pointer-events-none fixed inset-0 opacity-25" />
@@ -962,6 +1331,23 @@ export default function Dashboard() {
               KATALOG & ORDER TERKONEKSI // DATA REALTIME CONVEX
             </p>
           </div>
+          <div className="flex items-center gap-3">
+            {newOrders.length > 0 && (
+              <span
+                className="vx-mono vx-cut-sm inline-flex items-center gap-2 border border-vx-red/40 bg-vx-red/10 px-3 py-2 text-[10px] tracking-[0.2em] text-rose-100"
+                title="Ada order baru menunggu diproses di ORDER INBOX"
+              >
+                <BellRing className="size-3.5 animate-vx-pulse text-vx-red" />
+                {newOrders.length} ORDER BARU
+              </span>
+            )}
+            {newOrders.length === 0 && (
+              <span className="vx-mono vx-cut-sm inline-flex items-center gap-2 border border-vx-red/20 px-3 py-2 text-[10px] tracking-[0.2em] text-muted-foreground">
+                <Bell className="size-3.5" />
+                NOTIF AKTIF
+              </span>
+            )}
+          </div>
           <Button
             asChild
             variant="outline"
@@ -980,7 +1366,11 @@ export default function Dashboard() {
           <StatCard
             label="// ORDER MASUK"
             value={String(orders?.length ?? 0).padStart(2, "0")}
-            hint={`${newOrders.length} BELUM DIPROSES`}
+            hint={
+              newOrders.length > 0
+                ? `${newOrders.length} BELUM DIPROSES`
+                : "SEMUA TERPROSES"
+            }
           />
           <StatCard
             label="// POTENSI OMSET"

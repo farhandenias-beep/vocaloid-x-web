@@ -17,7 +17,20 @@ export type StoreProduct = {
   features: string[];
   status: ProductStatus;
   badge?: string;
+  /** Flash sale: crossed-out original price shown next to the promo price. */
+  compareAtPrice?: number;
 };
+
+/** Percentage discount of a flash-sale product, e.g. "HEMAT 35%". */
+export function discountPercent(product: {
+  price: number;
+  compareAtPrice?: number;
+}) {
+  if (!product.compareAtPrice || product.compareAtPrice <= product.price) return 0;
+  return Math.round(
+    ((product.compareAtPrice - product.price) / product.compareAtPrice) * 100,
+  );
+}
 
 export const PRODUCT_STATUSES: ProductStatus[] = [
   "available",
@@ -58,9 +71,14 @@ export function productOrderMessage(product: StoreProduct) {
     `• Kategori : ${product.category}`,
     `• Durasi   : ${product.duration}`,
     `• Harga    : ${formatIDR(product.price)}`,
+    product.compareAtPrice && product.compareAtPrice > product.price
+      ? `• Harga normal: ${formatIDR(product.compareAtPrice)} (promo flash sale)`
+      : "",
     "",
     "Mohon info langkah selanjutnya ya. Terima kasih!",
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 /** Prefilled WhatsApp text for a free-form order request. */

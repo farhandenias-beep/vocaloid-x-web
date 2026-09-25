@@ -32,6 +32,7 @@ import { scrollToSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
 import {
   Home,
+  Image as ImageIcon,
   Instagram,
   Layers,
   ListOrdered,
@@ -52,6 +53,7 @@ export const NAV_ITEMS: { id: string; label: string; icon: LucideIcon }[] = [
   { id: "home", label: "HOME", icon: Home },
   { id: "produk", label: "PRODUK", icon: ShoppingBag },
   { id: "keunggulan", label: "KEUNGGULAN", icon: ShieldCheck },
+  { id: "bukti", label: "BUKTI", icon: ImageIcon },
   { id: "testimoni", label: "TESTIMONI", icon: MessageSquareQuote },
   { id: "cara-order", label: "CARA ORDER", icon: ListOrdered },
   { id: "order", label: "ORDER", icon: MessageCircle },

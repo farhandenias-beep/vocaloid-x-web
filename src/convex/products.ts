@@ -198,6 +198,63 @@ export const create = mutation({
   },
 });
 
+export const update = mutation({
+  args: {
+    productId: v.id("products"),
+    name: v.string(),
+    category: v.string(),
+    tagline: v.string(),
+    price: v.number(),
+    duration: v.string(),
+    features: v.string(),
+    status: productStatus,
+    badge: v.optional(v.string()),
+    compareAtPrice: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireOperator(ctx);
+
+    const product = await ctx.db.get(args.productId);
+    if (!product || product.userId !== userId) {
+      throw new Error("Paket tidak ditemukan.");
+    }
+
+    const name = args.name.trim();
+    if (name.length < 2) throw new Error("Nama paket minimal 2 karakter.");
+    if (!Number.isFinite(args.price) || args.price < 0) {
+      throw new Error("Harga tidak valid.");
+    }
+
+    const price = Math.round(args.price);
+    const compareAtPrice =
+      args.compareAtPrice !== undefined && args.compareAtPrice > 0
+        ? Math.round(args.compareAtPrice)
+        : undefined;
+
+    if (compareAtPrice !== undefined && compareAtPrice <= price) {
+      throw new Error("Harga coret harus lebih tinggi dari harga promo.");
+    }
+
+    await ctx.db.patch(args.productId, {
+      name: name.slice(0, 60),
+      category: (args.category.trim() || "CHEAT PC").slice(0, 40),
+      tagline: args.tagline.trim().slice(0, 220),
+      price,
+      duration: (args.duration.trim() || "30 HARI").slice(0, 40),
+      features: args.features
+        .split("\n")
+        .flatMap((line) => line.split(","))
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 8),
+      status: args.status,
+      badge: args.badge?.trim() ? args.badge.trim().slice(0, 20) : undefined,
+      compareAtPrice,
+    });
+    return null;
+  },
+});
+
 export const setStatus = mutation({
   args: { productId: v.id("products"), status: productStatus },
   handler: async (ctx, args) => {
