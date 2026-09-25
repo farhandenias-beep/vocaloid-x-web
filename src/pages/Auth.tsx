@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/input-otp";
 
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowRight, Loader2, Mail, UserX } from "lucide-react";
+import { ArrowRight, Loader2, Mail } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 
@@ -86,21 +86,6 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     }
   };
 
-  const handleGuestLogin = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await signIn("anonymous");
-      navigate(redirect);
-    } catch (error) {
-      console.error("Guest login error:", error);
-      setError(
-        `Gagal masuk sebagai guest: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden">
       <HeroScene className="opacity-45" />
@@ -165,29 +150,10 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       </p>
                     )}
 
-                    <div className="mt-6">
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                          <span className="w-full border-t border-vx-red/20" />
-                        </div>
-                        <div className="relative flex justify-center">
-                          <span className="vx-label bg-[#0a0509] px-3">
-                            ATAU
-                          </span>
-                        </div>
-                      </div>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="vx-cut-sm vx-mono mt-5 h-11 w-full gap-2 border-vx-red/35 bg-transparent text-[11px] tracking-[0.2em] text-rose-100 hover:bg-vx-red/10 hover:text-white"
-                        onClick={handleGuestLogin}
-                        disabled={isLoading}
-                      >
-                        <UserX className="h-4 w-4" />
-                        MASUK SEBAGAI GUEST
-                      </Button>
-                    </div>
+                    <p className="vx-mono mt-5 border-l-2 border-vx-red/30 pl-3 text-[10px] leading-5 text-muted-foreground">
+                      Console operator bersifat privat. Hanya email owner toko
+                      yang bisa membuka katalog, QRIS, dan daftar order.
+                    </p>
                   </CardContent>
                 </form>
               </>

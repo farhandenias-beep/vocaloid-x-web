@@ -1,6 +1,6 @@
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getOperatorId, requireOperator } from "./operators";
 
 /** Order request sent from the public landing page before the WhatsApp handoff. */
 export const submit = mutation({
@@ -43,7 +43,7 @@ export const submit = mutation({
 export const listRecent = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getOperatorId(ctx);
     if (userId === null) return [];
     return await ctx.db.query("orders").order("desc").take(40);
   },
@@ -55,8 +55,7 @@ export const setStatus = mutation({
     status: v.union(v.literal("new"), v.literal("done")),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    await requireOperator(ctx);
     await ctx.db.patch(args.orderId, { status: args.status });
     return null;
   },
@@ -65,8 +64,7 @@ export const setStatus = mutation({
 export const remove = mutation({
   args: { orderId: v.id("orders") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    await requireOperator(ctx);
     await ctx.db.delete(args.orderId);
     return null;
   },

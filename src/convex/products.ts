@@ -1,6 +1,6 @@
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getOperatorId, requireOperator } from "./operators";
 
 const MAX_PRODUCTS = 40;
 
@@ -140,7 +140,7 @@ export const listPublic = query({
 export const listMine = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getOperatorId(ctx);
     if (userId === null) return [];
     return await ctx.db
       .query("products")
@@ -161,8 +161,7 @@ export const create = mutation({
     badge: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    const userId = await requireOperator(ctx);
 
     const name = args.name.trim();
     if (name.length < 2) throw new Error("Nama paket minimal 2 karakter.");
@@ -202,8 +201,7 @@ export const create = mutation({
 export const setStatus = mutation({
   args: { productId: v.id("products"), status: productStatus },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    const userId = await requireOperator(ctx);
     const product = await ctx.db.get(args.productId);
     if (!product || product.userId !== userId) {
       throw new Error("Paket tidak ditemukan.");
@@ -216,8 +214,7 @@ export const setStatus = mutation({
 export const remove = mutation({
   args: { productId: v.id("products") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    const userId = await requireOperator(ctx);
     const product = await ctx.db.get(args.productId);
     if (!product || product.userId !== userId) {
       throw new Error("Paket tidak ditemukan.");
@@ -231,8 +228,7 @@ export const remove = mutation({
 export const seed = mutation({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    const userId = await requireOperator(ctx);
 
     const existing = await ctx.db
       .query("products")

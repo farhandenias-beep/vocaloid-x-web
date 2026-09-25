@@ -945,8 +945,8 @@ function Order() {
               <div className="flex items-center gap-3">
                 <Lock className="size-4 text-vx-red" />
                 <p className="vx-mono text-[11px] leading-5 text-muted-foreground">
-                  Punya akses operator? Masuk ke console untuk mengelola
-                  katalog dan memproses order yang masuk.
+                  Console operator bersifat privat — hanya email owner toko yang
+                  bisa mengelola katalog, QRIS, dan memproses order masuk.
                 </p>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -960,7 +960,7 @@ function Order() {
                   to="/dashboard"
                   className="vx-mono vx-cut-sm border border-vx-red/30 bg-vx-red/5 px-3 py-1.5 text-[10px] tracking-[0.2em] text-rose-100 transition-colors hover:border-vx-red/70 hover:text-vx-red"
                 >
-                  LIHAT CONSOLE
+                  PANEL OPERATOR
                 </Link>
               </div>
             </HudPanel>

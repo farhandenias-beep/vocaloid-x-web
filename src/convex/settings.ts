@@ -1,10 +1,10 @@
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import {
   mutation,
   query,
   type MutationCtx,
 } from "./_generated/server";
+import { requireOperator } from "./operators";
 
 export const DEFAULT_PAYMENT_METHODS = [
   "BCA",
@@ -38,8 +38,7 @@ export const get = query({
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    await requireOperator(ctx);
     return await ctx.storage.generateUploadUrl();
   },
 });
@@ -60,8 +59,7 @@ async function ensureSettings(ctx: MutationCtx) {
 export const setQris = mutation({
   args: { imageId: v.union(v.id("_storage"), v.null()) },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    await requireOperator(ctx);
 
     const settings = await ensureSettings(ctx);
     const previous = settings.qrisImageId;
@@ -81,8 +79,7 @@ export const setQris = mutation({
 export const updatePayment = mutation({
   args: { paymentMethods: v.string(), paymentNote: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    await requireOperator(ctx);
 
     const settings = await ensureSettings(ctx);
     const methods = args.paymentMethods

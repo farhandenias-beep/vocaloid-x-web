@@ -16,6 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { isOperatorEmail } from "@/convex/operatorEmails";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DEVELOPER_NAME,
@@ -76,8 +77,10 @@ function OnlinePill({ className }: { className?: string }) {
 
 /** Fixed top command bar: logo, section nav, system status, operator controls. */
 export function SiteNav({ active }: { active: string }) {
-  const { isAuthenticated, signOut } = useAuth();
+  const { isAuthenticated, user, signOut } = useAuth();
   const navigate = useNavigate();
+  // Console hanya untuk owner toko (lihat src/convex/operatorEmails.ts).
+  const isOperator = isOperatorEmail(user?.email);
 
   const handleNav = (id: string) => scrollToSection(id);
 
@@ -141,13 +144,15 @@ export function SiteNav({ active }: { active: string }) {
                 // OPERATOR MENU
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => navigate(DASHBOARD_HREF)}
-              >
-                <Layers className="mr-2 size-4" />
-                Store console
-              </DropdownMenuItem>
+              {isOperator && (
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => navigate(DASHBOARD_HREF)}
+                >
+                  <Layers className="mr-2 size-4" />
+                  Store console
+                </DropdownMenuItem>
+              )}
               {isAuthenticated ? (
                 <DropdownMenuItem
                   className="cursor-pointer text-destructive focus:text-destructive"
@@ -173,8 +178,8 @@ export function SiteNav({ active }: { active: string }) {
             size="sm"
             className="vx-mono vx-cut-sm hidden text-[11px] tracking-[0.18em] sm:inline-flex"
           >
-            <Link to={isAuthenticated ? DASHBOARD_HREF : SIGN_IN_HREF}>
-              {isAuthenticated ? "CONSOLE" : "SIGN IN"}
+            <Link to={isOperator ? DASHBOARD_HREF : SIGN_IN_HREF}>
+              {isOperator ? "CONSOLE" : "SIGN IN"}
             </Link>
           </Button>
 
@@ -224,10 +229,8 @@ export function SiteNav({ active }: { active: string }) {
                 <OnlinePill />
                 <SheetClose asChild>
                   <Button asChild className="vx-mono w-full text-[11px] tracking-[0.2em]">
-                    <Link
-                      to={isAuthenticated ? DASHBOARD_HREF : SIGN_IN_HREF}
-                    >
-                      {isAuthenticated ? "OPEN CONSOLE" : "SIGN IN"}
+                    <Link to={isOperator ? DASHBOARD_HREF : SIGN_IN_HREF}>
+                      {isOperator ? "OPEN CONSOLE" : "SIGN IN"}
                     </Link>
                   </Button>
                 </SheetClose>
