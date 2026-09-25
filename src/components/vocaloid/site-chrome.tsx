@@ -38,6 +38,7 @@ import {
   LogOut,
   Menu,
   MessageCircle,
+  MessageSquareQuote,
   Music2,
   Settings,
   ShieldCheck,
@@ -51,6 +52,7 @@ export const NAV_ITEMS: { id: string; label: string; icon: LucideIcon }[] = [
   { id: "home", label: "HOME", icon: Home },
   { id: "produk", label: "PRODUK", icon: ShoppingBag },
   { id: "keunggulan", label: "KEUNGGULAN", icon: ShieldCheck },
+  { id: "testimoni", label: "TESTIMONI", icon: MessageSquareQuote },
   { id: "cara-order", label: "CARA ORDER", icon: ListOrdered },
   { id: "order", label: "ORDER", icon: MessageCircle },
 ];

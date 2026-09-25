@@ -61,6 +61,17 @@ const schema = defineSchema(
       updatedAt: v.number(),
     }),
 
+    // buyer testimonials curated by the owner, shown on the landing page
+    testimonials: defineTable({
+      buyerName: v.string(),
+      product: v.string(),
+      message: v.string(),
+      rating: v.number(),
+      verified: v.boolean(),
+      sortOrder: v.number(),
+      createdAt: v.number(),
+    }).index("by_sort", ["sortOrder"]),
+
     // order intents captured from the landing page before WhatsApp handoff
     orders: defineTable({
       name: v.string(),

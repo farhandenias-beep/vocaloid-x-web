@@ -57,10 +57,12 @@ import {
   Lock,
   MapPin,
   MessageCircle,
+  MessageSquareQuote,
   Package,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  Star,
   Wallet,
   Zap,
   type LucideIcon,
@@ -69,7 +71,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
-const SECTION_IDS = ["home", "produk", "keunggulan", "cara-order", "order"];
+const SECTION_IDS = ["home", "produk", "keunggulan", "cara-order", "testimoni", "order"];
 
 const reveal = {
   initial: { opacity: 0, y: 26 },
@@ -609,6 +611,94 @@ function Advantages() {
   );
 }
 
+function Testimonials() {
+  const testimonials = useQuery(api.testimonials.listPublic);
+
+  if (testimonials !== undefined && testimonials.length === 0) {
+    return null;
+  }
+
+  return (
+    <section
+      id="testimoni"
+      className="relative scroll-mt-20 border-t border-vx-red/15 bg-[#07040a] py-20 sm:py-24"
+    >
+      <div className="mx-auto w-full max-w-[1600px] px-5 sm:px-8">
+        <motion.div
+          {...reveal}
+          className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+        >
+          <div>
+            <SectionLabel>// TESTIMONI PEMBELI</SectionLabel>
+            <h2 className="mt-5 font-display text-3xl leading-tight font-black uppercase sm:text-4xl lg:text-[2.9rem]">
+              KATA MEREKA YANG <span className="vx-glow text-vx-red">SUDAH PUSH</span>
+            </h2>
+          </div>
+          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+            Ulasan asli dari pembeli VOCALOID-X — dikumpulkan langsung dari chat
+            WhatsApp admin.
+          </p>
+        </motion.div>
+
+        {testimonials === undefined ? (
+          <div className="mt-12 flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" />
+            <span className="vx-mono text-[11px] tracking-[0.2em]">MEMUAT ULASAN...</span>
+          </div>
+        ) : (
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {testimonials.map((item, index) => (
+              <motion.article
+                key={item._id}
+                {...reveal}
+                transition={{ ...reveal.transition, delay: (index % 3) * 0.07 }}
+                className="vx-panel vx-cut relative flex flex-col p-5"
+              >
+                <MessageSquareQuote className="absolute top-4 right-4 size-8 text-vx-red/15" />
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="vx-mono text-[11px] font-bold tracking-[0.08em] text-rose-50">
+                    {item.buyerName}
+                  </span>
+                  {item.verified && (
+                    <span className="vx-mono inline-flex items-center gap-1 rounded-sm border border-[#4ade80]/40 bg-[#4ade80]/10 px-1.5 py-0.5 text-[9px] tracking-[0.18em] text-[#7dffb0]">
+                      <BadgeCheck className="size-3" />
+                      VERIFIED
+                    </span>
+                  )}
+                </div>
+                {item.product && (
+                  <span className="vx-mono mt-2 inline-block w-fit border border-vx-red/20 bg-vx-red/5 px-1.5 py-0.5 text-[9px] tracking-[0.16em] text-rose-100/70">
+                    {item.product}
+                  </span>
+                )}
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
+                  “{item.message}”
+                </p>
+                <div
+                  className="mt-4 flex items-center gap-0.5"
+                  aria-label={`Rating ${item.rating} dari 5`}
+                >
+                  {Array.from({ length: 5 }).map((_, starIndex) => (
+                    <Star
+                      key={starIndex}
+                      className={cn(
+                        "size-3.5",
+                        starIndex < item.rating
+                          ? "fill-vx-ember text-vx-ember"
+                          : "text-vx-red/25",
+                      )}
+                    />
+                  ))}
+                </div>
+              </motion.article>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function HowToOrder() {
   const settings = useQuery(api.settings.get);
   const payments = settings?.paymentMethods ?? FALLBACK_PAYMENTS;
@@ -982,6 +1072,7 @@ export default function Landing() {
         <Hero />
         <Catalog />
         <Advantages />
+        <Testimonials />
         <HowToOrder />
         <Order />
         <SiteFooter />

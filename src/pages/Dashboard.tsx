@@ -37,12 +37,14 @@ import {
   LogOut,
   Loader2,
   MessageCircle,
+  MessageSquareQuote,
   Package,
   Plus,
   QrCode,
   Save,
   ShoppingBag,
   Sparkles,
+  Star,
   Store,
   Trash2,
   Upload,
@@ -736,10 +738,205 @@ function OrderInbox({ orders }: { orders: Doc<"orders">[] | undefined }) {
   );
 }
 
+function TestimonialManager() {
+  const testimonials = useQuery(api.testimonials.listMine);
+  const createTestimonial = useMutation(api.testimonials.create);
+  const removeTestimonial = useMutation(api.testimonials.remove);
+
+  const [rating, setRating] = useState("5");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    setIsSaving(true);
+    try {
+      await createTestimonial({
+        buyerName: String(data.get("buyerName") ?? ""),
+        product: String(data.get("product") ?? ""),
+        message: String(data.get("message") ?? ""),
+        rating: Number(rating),
+        verified: data.get("verified") !== null,
+      });
+      form.reset();
+      setRating("5");
+      toast.success("TESTIMONI DITAMBAHKAN // Langsung tampil di landing.");
+    } catch (error) {
+      toast.error(formatConvexError(error, "Gagal menyimpan testimoni."));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRemove = async (testimonialId: Id<"testimonials">) => {
+    try {
+      await removeTestimonial({ testimonialId });
+      toast.success("TESTIMONI DIHAPUS.");
+    } catch (error) {
+      toast.error(formatConvexError(error, "Gagal menghapus testimoni."));
+    }
+  };
+
+  return (
+    <HudPanel
+      label="// TESTIMONI PEMBELI"
+      right={
+        <span className="vx-mono text-[10px] text-vx-red">
+          {testimonials?.length ?? 0} TERSIMPAN
+        </span>
+      }
+      bodyClassName="p-5"
+    >
+      <p className="vx-mono text-[11px] leading-5 text-muted-foreground">
+        Salin ulasan asli dari chat pembeli ke sini. Testimoni terverifikasi
+        ditandai hijau dan langsung tampil di landing page.
+      </p>
+
+      <form onSubmit={handleCreate} className="mt-4 space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block space-y-2">
+            <span className="vx-label block">// NAMA PEMBELI</span>
+            <Input
+              name="buyerName"
+              required
+              minLength={2}
+              maxLength={40}
+              disabled={isSaving}
+              placeholder="Rifqi — Majalengka"
+              className="vx-mono vx-cut-sm h-11 border-vx-red/25 bg-[#0a0509] text-sm focus-visible:border-vx-red/70"
+            />
+          </label>
+          <label className="block space-y-2">
+            <span className="vx-label block">// PAKET DIBELI</span>
+            <Input
+              name="product"
+              maxLength={60}
+              disabled={isSaving}
+              placeholder="VOCALOID-X WEEKLY"
+              className="vx-mono vx-cut-sm h-11 border-vx-red/25 bg-[#0a0509] text-sm focus-visible:border-vx-red/70"
+            />
+          </label>
+        </div>
+
+        <label className="block space-y-2">
+          <span className="vx-label block">// ULASAN</span>
+          <Textarea
+            name="message"
+            rows={3}
+            maxLength={300}
+            required
+            disabled={isSaving}
+            placeholder="Cheat jalan mulus, support fast respon. Auto win streak 8x!"
+            className="vx-mono vx-cut-sm border-vx-red/25 bg-[#0a0509] text-sm focus-visible:border-vx-red/70"
+          />
+        </label>
+
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="space-y-2">
+            <span className="vx-label block">// RATING</span>
+            <Select value={rating} onValueChange={setRating} disabled={isSaving}>
+              <SelectTrigger className="vx-mono vx-cut-sm h-11 w-[150px] border-vx-red/25 bg-[#0a0509] text-[11px] tracking-[0.16em]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[5, 4, 3, 2, 1].map((value) => (
+                  <SelectItem key={value} value={String(value)}>
+                    {"★".repeat(value)} {value}/5
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </label>
+
+          <label className="mt-6 flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              name="verified"
+              defaultChecked
+              className="size-4 accent-[#ff2a45]"
+            />
+            <span className="vx-mono text-[10px] tracking-[0.18em] text-rose-100/85">
+              TANDAI TERVERIFIKASI
+            </span>
+          </label>
+
+          <Button
+            type="submit"
+            disabled={isSaving}
+            className="vx-cut vx-mono mt-6 gap-2 text-[11px] tracking-[0.22em]"
+          >
+            {isSaving ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Plus className="size-4" />
+            )}
+            TAMBAH TESTIMONI
+          </Button>
+        </div>
+      </form>
+
+      <div className="mt-6 border-t border-vx-red/15 pt-2">
+        {testimonials === undefined ? (
+          <div className="flex items-center gap-2 py-6 text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" />
+            <span className="vx-mono text-[11px]">MEMUAT TESTIMONI...</span>
+          </div>
+        ) : testimonials.length === 0 ? (
+          <p className="vx-mono py-6 text-[11px] leading-5 text-muted-foreground">
+            Belum ada testimoni tersimpan. Landing page menyembunyikan section
+            testimoni sampai ada minimal satu ulasan.
+          </p>
+        ) : (
+          <ul className="divide-y divide-vx-red/12">
+            {testimonials.map((item) => (
+              <li key={item._id} className="py-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="vx-mono text-[11px] font-bold tracking-[0.08em] text-rose-50">
+                    {item.buyerName}
+                  </h3>
+                  {item.verified && (
+                    <span className="vx-mono inline-flex items-center gap-1 rounded-sm border border-[#4ade80]/40 bg-[#4ade80]/10 px-1.5 py-0.5 text-[9px] tracking-[0.18em] text-[#7dffb0]">
+                      <MessageSquareQuote className="size-3" />
+                      VERIFIED
+                    </span>
+                  )}
+                  <span className="vx-mono ml-auto text-[10px] text-vx-ember">
+                    {"★".repeat(item.rating)}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Hapus testimoni ${item.buyerName}`}
+                    onClick={() => handleRemove(item._id)}
+                    className="size-8 text-muted-foreground hover:bg-vx-red/10 hover:text-vx-red"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+                {item.product && (
+                  <span className="vx-mono mt-2 inline-block border border-vx-red/20 bg-vx-red/5 px-1.5 py-0.5 text-[9px] tracking-[0.16em] text-rose-100/70">
+                    {item.product}
+                  </span>
+                )}
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  “{item.message}”
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </HudPanel>
+  );
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const products = useQuery(api.products.listMine);
   const orders = useQuery(api.orders.listRecent);
+  const testimonials = useQuery(api.testimonials.listMine);
 
   const liveProducts = products?.filter((p) => p.status === "available").length ?? 0;
   const newOrders = orders?.filter((order) => order.status === "new") ?? [];
@@ -879,6 +1076,13 @@ export default function Dashboard() {
           <div className="xl:col-span-5">
             <PaymentSettings />
           </div>
+        </div>
+
+        <div className="mt-5 grid gap-5 xl:grid-cols-12">
+          <div className="xl:col-span-7">
+            <TestimonialManager />
+          </div>
+          <div className="hidden xl:col-span-5 xl:block" />
         </div>
       </main>
     </div>
