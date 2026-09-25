@@ -19,9 +19,12 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import {
   DEVELOPER_NAME,
+  INSTAGRAM_URL,
   ORDER_INTRO,
   STORE_TAGLINE,
+  TIKTOK_URL,
   WHATSAPP_LABEL,
+  YOUTUBE_URL,
   whatsappUrl,
 } from "@/lib/brand";
 import { scrollToSection } from "@/hooks/use-active-section";
@@ -310,10 +313,10 @@ const SOCIALS: { icon: LucideIcon; label: string; href: string }[] = [
     label: "WhatsApp",
     href: whatsappUrl(`${ORDER_INTRO} paket FF PC.`),
   },
-  { icon: Instagram, label: "Instagram", href: "https://instagram.com" },
-  { icon: Music2, label: "TikTok", href: "https://tiktok.com" },
-  { icon: Youtube, label: "YouTube", href: "https://youtube.com" },
-];
+  { icon: Instagram, label: "Instagram", href: INSTAGRAM_URL },
+  { icon: Music2, label: "TikTok", href: TIKTOK_URL },
+  { icon: Youtube, label: "YouTube", href: YOUTUBE_URL },
+].filter((social) => social.href.length > 0);
 
 export function SiteFooter() {
   return (

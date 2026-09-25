@@ -31,3 +31,11 @@ export function whatsappUrl(message: string) {
 
 /** Pembuka otomatis pada setiap chat order ke WhatsApp toko. */
 export const ORDER_INTRO = "Bang mau order";
+
+/** Link sosial media toko. Ganti dengan URL profil asli milikmu. */
+export const INSTAGRAM_URL = "https://instagram.com";
+
+export const YOUTUBE_URL = "https://youtube.com";
+
+/** Contoh: "https://www.tiktok.com/@username". Kosongkan untuk menyembunyikan. */
+export const TIKTOK_URL = "";
