@@ -1,17 +1,17 @@
 {
-  "name": "freebuff.com application",
-  "short_name": "freebuff.com",
-  "description": "freebuff.com application",
+  "name": "VOCALOID-X",
+  "short_name": "VOCALOID-X",
+  "description": "VOCALOID-X — Toko digital cheat Free Fire PC & setting emulator. CODE × DEMON × FUTURE.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#050407",
+  "theme_color": "#050407",
   "icons": [
     {
-      "src": "/logo.png",
-      "sizes": "any",
+      "src": "/vocaloid-x-logo.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
