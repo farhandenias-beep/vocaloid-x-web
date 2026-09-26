@@ -49,6 +49,8 @@ const schema = defineSchema(
       badge: v.optional(v.string()),
       // flash sale: original price crossed out on the storefront while promo runs
       compareAtPrice: v.optional(v.number()),
+      // live availability note shown on the storefront, e.g. "SLOT 8/10 HARI INI"
+      stockNote: v.optional(v.string()),
       sortOrder: v.number(),
       createdAt: v.number(),
     })
@@ -81,11 +83,34 @@ const schema = defineSchema(
       productName: v.string(),
       price: v.number(),
       note: v.optional(v.string()),
+      // short public tracking code shown to the buyer after checkout
+      orderCode: v.optional(v.string()),
       status: v.union(v.literal("new"), v.literal("done")),
       createdAt: v.number(),
     })
       .index("by_status", ["status"])
-      .index("by_created", ["createdAt"]),
+      .index("by_created", ["createdAt"])
+      .index("by_code", ["orderCode"]),
+
+    // discount vouchers applied at checkout and managed from the console
+    vouchers: defineTable({
+      code: v.string(),
+      // percent between 1-90
+      percentOff: v.number(),
+      active: v.boolean(),
+      maxUses: v.optional(v.number()),
+      usedCount: v.number(),
+      expiresAt: v.optional(v.number()),
+      createdAt: v.number(),
+    }).index("by_code", ["code"]),
+
+    // buyer FAQ entries curated from the console, rendered as an accordion
+    faqs: defineTable({
+      question: v.string(),
+      answer: v.string(),
+      sortOrder: v.number(),
+      createdAt: v.number(),
+    }).index("by_sort", ["sortOrder"]),
   },
   {
     schemaValidation: false,

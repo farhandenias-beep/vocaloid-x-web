@@ -14,6 +14,8 @@ const Landing = lazy(() => import("./pages/Landing.tsx"));
 const AuthPage = lazy(() => import("./pages/Auth.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+const OrderStatusPage = lazy(() => import("./pages/OrderStatusPage.tsx"));
+const PolicyPage = lazy(() => import("./pages/PolicyPage.tsx"));
 
 // Simple loading fallback for route transitions
 function RouteLoading() {
@@ -132,6 +134,8 @@ createRoot(document.getElementById("root")!).render(
                   </RequireAuth>
                 }
               />
+              <Route path="/status-order" element={<OrderStatusPage />} />
+              <Route path="/kebijakan" element={<PolicyPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

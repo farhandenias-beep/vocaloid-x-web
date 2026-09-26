@@ -159,6 +159,7 @@ export const create = mutation({
     features: v.string(),
     status: productStatus,
     badge: v.optional(v.string()),
+    stockNote: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await requireOperator(ctx);
@@ -192,6 +193,9 @@ export const create = mutation({
         .slice(0, 8),
       status: args.status,
       badge: args.badge?.trim() ? args.badge.trim().slice(0, 20) : undefined,
+      stockNote: args.stockNote?.trim()
+        ? args.stockNote.trim().slice(0, 40)
+        : undefined,
       sortOrder: Date.now(),
       createdAt: Date.now(),
     });
@@ -210,6 +214,7 @@ export const update = mutation({
     status: productStatus,
     badge: v.optional(v.string()),
     compareAtPrice: v.optional(v.number()),
+    stockNote: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await requireOperator(ctx);
@@ -250,6 +255,9 @@ export const update = mutation({
       status: args.status,
       badge: args.badge?.trim() ? args.badge.trim().slice(0, 20) : undefined,
       compareAtPrice,
+      stockNote: args.stockNote?.trim()
+        ? args.stockNote.trim().slice(0, 40)
+        : undefined,
     });
     return null;
   },

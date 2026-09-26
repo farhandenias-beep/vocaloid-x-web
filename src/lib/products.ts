@@ -19,6 +19,8 @@ export type StoreProduct = {
   badge?: string;
   /** Flash sale: crossed-out original price shown next to the promo price. */
   compareAtPrice?: number;
+  /** Live availability note shown on the storefront card, e.g. "SLOT 8/10". */
+  stockNote?: string;
 };
 
 /** Percentage discount of a flash-sale product, e.g. "HEMAT 35%". */

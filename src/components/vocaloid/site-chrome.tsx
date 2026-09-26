@@ -31,7 +31,9 @@ import {
 import { scrollToSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
 import {
+  FileText,
   Home,
+  HelpCircle,
   Instagram,
   Layers,
   ListOrdered,
@@ -40,6 +42,7 @@ import {
   MessageCircle,
   MessageSquareQuote,
   Music2,
+  ScanLine,
   Settings,
   ShieldCheck,
   ShoppingBag,
@@ -54,8 +57,12 @@ export const NAV_ITEMS: { id: string; label: string; icon: LucideIcon }[] = [
   { id: "keunggulan", label: "KEUNGGULAN", icon: ShieldCheck },
   { id: "testimoni", label: "TESTIMONI", icon: MessageSquareQuote },
   { id: "cara-order", label: "CARA ORDER", icon: ListOrdered },
+  { id: "faq", label: "FAQ", icon: HelpCircle },
   { id: "order", label: "ORDER", icon: MessageCircle },
 ];
+
+const TRACK_HREF = "/status-order";
+const POLICY_HREF = "/kebijakan";
 
 const DASHBOARD_HREF = "/dashboard";
 const SIGN_IN_HREF = "/auth?returnTo=%2Fdashboard";
@@ -128,6 +135,14 @@ export function SiteNav({ active }: { active: string }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
+          <Link
+            to={TRACK_HREF}
+            className="vx-mono vx-cut-sm hidden items-center gap-1.5 border border-vx-red/25 bg-vx-red/5 px-3 py-1.5 text-[10px] tracking-[0.18em] text-rose-100/85 transition-colors hover:border-vx-red/60 hover:text-vx-red md:inline-flex"
+          >
+            <ScanLine className="size-3.5" />
+            LACAK ORDER
+          </Link>
+
           <OnlinePill className="hidden sm:inline-flex" />
 
           <DropdownMenu>
@@ -226,6 +241,24 @@ export function SiteNav({ active }: { active: string }) {
                     </button>
                   </SheetClose>
                 ))}
+                <SheetClose asChild>
+                  <Link
+                    to={TRACK_HREF}
+                    className="vx-mono flex items-center gap-3 px-3 py-3 text-[12px] tracking-[0.2em] text-muted-foreground transition-colors hover:text-rose-100"
+                  >
+                    <ScanLine className="size-4" />
+                    LACAK ORDER
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    to={POLICY_HREF}
+                    className="vx-mono flex items-center gap-3 px-3 py-3 text-[12px] tracking-[0.2em] text-muted-foreground transition-colors hover:text-rose-100"
+                  >
+                    <FileText className="size-4" />
+                    KEBIJAKAN
+                  </Link>
+                </SheetClose>
               </nav>
               <div className="mt-auto space-y-3 border-t border-vx-red/20 p-5">
                 <OnlinePill />
@@ -360,8 +393,23 @@ export function SiteFooter() {
             © 2026 VOCALOID-X.{" "}
             <span className="text-vx-red/80">ALL RIGHTS RESERVED.</span>
           </p>
-          <p className="mt-1.5">
-            DEVELOPED BY <span className="text-vx-red">{DEVELOPER_NAME}</span>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 lg:justify-end">
+            <span>
+              DEVELOPED BY <span className="text-vx-red">{DEVELOPER_NAME}</span>
+            </span>
+            <Link
+              to={TRACK_HREF}
+              className="text-rose-100/70 transition-colors hover:text-vx-red"
+            >
+              LACAK ORDER
+            </Link>
+            <span className="text-vx-red/40">//</span>
+            <Link
+              to={POLICY_HREF}
+              className="text-rose-100/70 transition-colors hover:text-vx-red"
+            >
+              KEBIJAKAN
+            </Link>
           </p>
         </div>
       </div>

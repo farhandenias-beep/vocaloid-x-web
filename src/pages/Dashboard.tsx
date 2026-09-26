@@ -29,12 +29,14 @@ import {
   type ProductStatus,
 } from "@/lib/products";
 import { cn, formatConvexError } from "@/lib/utils";
+import { FaqManager, SalesStats, VoucherManager } from "@/pages/console-panels";
 import { useMutation, useQuery } from "convex/react";
 import {
   Bell,
   BellRing,
   ChefHat,
   Download,
+  FileDown,
   Inbox,
   LogOut,
   Loader2,
@@ -224,6 +226,7 @@ function ProductManager({
         features: String(data.get("features") ?? ""),
         status,
         badge: String(data.get("badge") ?? ""),
+        stockNote: String(data.get("stockNote") ?? ""),
       });
       form.reset();
       setStatus("available");
@@ -288,6 +291,7 @@ function ProductManager({
         status: editStatus,
         badge: String(data.get("badge") ?? ""),
         compareAtPrice: rawCompare ? Number(rawCompare) : undefined,
+        stockNote: String(data.get("stockNote") ?? ""),
       });
       closeEdit();
       toast.success("PAKET DIPERBARUI // Katalog tersinkron.");
@@ -374,6 +378,16 @@ function ProductManager({
               disabled={isSaving}
               placeholder="TERPOPULER"
               className="vx-mono vx-cut-sm h-11 border-vx-red/25 bg-[#0a0509] text-sm focus-visible:border-vx-red/70"
+            />
+          </label>
+          <label className="block space-y-2">
+            <span className="vx-label block">// CATATAN STOK LIVE</span>
+            <Input
+              name="stockNote"
+              maxLength={40}
+              disabled={isSaving}
+              placeholder="SLOT 8/10 HARI INI"
+              className="vx-mono vx-cut-sm h-11 border-vx-ember/40 bg-[#0a0509] text-sm focus-visible:border-vx-ember/70"
             />
           </label>
         </div>
@@ -533,6 +547,11 @@ function ProductManager({
                       {product.badge}
                     </span>
                   )}
+                  {product.stockNote && (
+                    <span className="vx-mono border border-vx-ember/30 bg-vx-ember/5 px-1.5 py-0.5 text-[9px] tracking-[0.14em] text-vx-ember/90">
+                      {product.stockNote}
+                    </span>
+                  )}
                   {product.features.slice(0, 4).map((feature) => (
                     <span
                       key={feature}
@@ -688,6 +707,18 @@ function ProductManager({
                           step={1000}
                           placeholder="Kosong = tanpa promo"
                           defaultValue={product.compareAtPrice ?? ""}
+                          disabled={isUpdating}
+                          className="vx-mono vx-cut-sm h-11 w-[210px] border-vx-ember/40 bg-[#050407] text-sm focus-visible:border-vx-ember/70"
+                        />
+                      </label>
+
+                      <label className="block space-y-2">
+                        <span className="vx-label block">// CATATAN STOK LIVE</span>
+                        <Input
+                          name="stockNote"
+                          maxLength={40}
+                          placeholder="Kosong = tanpa catatan"
+                          defaultValue={product.stockNote ?? ""}
                           disabled={isUpdating}
                           className="vx-mono vx-cut-sm h-11 w-[210px] border-vx-ember/40 bg-[#050407] text-sm focus-visible:border-vx-ember/70"
                         />
@@ -908,7 +939,8 @@ function OrderInbox({ orders }: { orders: Doc<"orders">[] | undefined }) {
       return (
         order.name.toLowerCase().includes(query) ||
         order.contact.toLowerCase().includes(query) ||
-        order.productName.toLowerCase().includes(query)
+        order.productName.toLowerCase().includes(query) ||
+        (order.orderCode ?? "").toLowerCase().includes(query)
       );
     });
   }, [orders, statusFilter, query]);
@@ -967,7 +999,7 @@ function OrderInbox({ orders }: { orders: Doc<"orders">[] | undefined }) {
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Cari nama / paket / nomor..."
+            placeholder="Cari nama / paket / kode..."
             className="vx-mono vx-cut-sm h-9 w-[220px] border-vx-red/25 bg-[#0a0509] pl-8 text-[12px] focus-visible:border-vx-red/70"
           />
         </label>
@@ -1006,6 +1038,11 @@ function OrderInbox({ orders }: { orders: Doc<"orders">[] | undefined }) {
                 <span className="vx-mono text-[10px] text-muted-foreground">
                   {order.contact}
                 </span>
+                {order.orderCode && (
+                  <span className="vx-mono border border-vx-red/25 bg-vx-red/5 px-1.5 py-0.5 text-[9px] tracking-[0.16em] text-vx-red">
+                    {order.orderCode}
+                  </span>
+                )}
                 <span className="vx-mono ml-auto text-[10px] text-muted-foreground">
                   {timeAgo(order.createdAt)}
                 </span>
@@ -1037,7 +1074,7 @@ function OrderInbox({ orders }: { orders: Doc<"orders">[] | undefined }) {
                 <a
                   href={contactLink(
                     order.contact,
-                    `Halo ${order.name}, terima kasih sudah order ${order.productName} (${formatIDR(order.price)}) di VOCALOID-X.`,
+                    `Halo ${order.name}, terima kasih sudah order ${order.productName} (${formatIDR(order.price)}) di VOCALOID-X. Kode order Anda: ${order.orderCode ?? "-"}.`,
                   )}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -1273,6 +1310,25 @@ export default function Dashboard() {
   const products = useQuery(api.products.listMine);
   const orders = useQuery(api.orders.listRecent);
   const testimonials = useQuery(api.testimonials.listMine);
+  const sales = useQuery(api.orders.stats);
+  const exportCsv = useQuery(api.orders.exportCsv);
+
+  const handleExportCsv = () => {
+    if (!exportCsv?.csv) {
+      toast.error("Data export belum siap. Coba lagi sebentar.");
+      return;
+    }
+    const blob = new Blob([exportCsv.csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = exportCsv.filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast.success("CSV ORDER TERUNDUH.");
+  };
 
   const liveProducts = products?.filter((p) => p.status === "available").length ?? 0;
   const newOrders = orders?.filter((order) => order.status === "new") ?? [];
@@ -1347,14 +1403,23 @@ export default function Dashboard() {
                 NOTIF AKTIF
               </span>
             )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleExportCsv}
+              className="vx-cut vx-mono border-vx-ember/40 bg-transparent gap-2 text-[11px] tracking-[0.2em] text-vx-ember hover:bg-vx-ember/10 hover:text-vx-ember"
+            >
+              <FileDown className="size-4" />
+              EXPORT CSV
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="vx-cut vx-mono border-vx-red/35 bg-transparent text-[11px] tracking-[0.22em] text-rose-100 hover:bg-vx-red/10 hover:text-white"
+            >
+              <Link to="/">KEMBALI KE TOKO</Link>
+            </Button>
           </div>
-          <Button
-            asChild
-            variant="outline"
-            className="vx-cut vx-mono border-vx-red/35 bg-transparent text-[11px] tracking-[0.22em] text-rose-100 hover:bg-vx-red/10 hover:text-white"
-          >
-            <Link to="/">KEMBALI KE TOKO</Link>
-          </Button>
         </div>
 
         <div className="mt-9 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -1461,6 +1526,15 @@ export default function Dashboard() {
 
         <div className="mt-5 grid gap-5 xl:grid-cols-12">
           <div className="xl:col-span-7">
+            <SalesStats sales={sales} />
+          </div>
+          <div className="xl:col-span-5">
+            <VoucherManager />
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-5 xl:grid-cols-12">
+          <div className="xl:col-span-7">
             <OrderInbox orders={orders} />
           </div>
           <div className="xl:col-span-5">
@@ -1472,7 +1546,9 @@ export default function Dashboard() {
           <div className="xl:col-span-7">
             <TestimonialManager />
           </div>
-          <div className="hidden xl:col-span-5 xl:block" />
+          <div className="xl:col-span-5">
+            <FaqManager />
+          </div>
         </div>
       </main>
     </div>

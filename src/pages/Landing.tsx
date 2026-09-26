@@ -24,6 +24,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useActiveSection, scrollToSection } from "@/hooks/use-active-section";
 import {
   OPERATIONAL_HOURS,
@@ -48,6 +54,7 @@ import { cn, formatConvexError } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import {
+  Activity,
   BadgeCheck,
   Check,
   ChevronDown,
@@ -60,10 +67,14 @@ import {
   MessageCircle,
   MessageSquareQuote,
   Package,
+  ScanLine,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
   Star,
+  Terminal,
+  Ticket,
+  TicketPercent,
   Wallet,
   Zap,
   type LucideIcon,
@@ -78,6 +89,7 @@ const SECTION_IDS = [
   "keunggulan",
   "testimoni",
   "cara-order",
+  "faq",
   "order",
 ];
 
@@ -151,7 +163,7 @@ const FALLBACK_PAYMENTS = [
   "QRIS",
 ];
 
-const FAQ: { question: string; answer: string }[] = [
+const FALLBACK_FAQS: { question: string; answer: string }[] = [
   {
     question: "Aman dipakai di akun utama?",
     answer:
@@ -333,14 +345,26 @@ function Hero() {
   );
 }
 
-function StatusPill({ status }: { status: ProductStatus }) {
+function StatusPill({
+  status,
+  live = false,
+}: {
+  status: ProductStatus;
+  live?: boolean;
+}) {
   return (
     <span
       className={cn(
-        "vx-mono rounded-sm border px-2 py-0.5 text-[9px] tracking-[0.24em]",
+        "vx-mono inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-[9px] tracking-[0.24em]",
         PRODUCT_STATUS_STYLES[status],
       )}
     >
+      {live && (
+        <span className="relative flex size-1.5">
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-current opacity-60" />
+          <span className="relative inline-flex size-1.5 rounded-full bg-current" />
+        </span>
+      )}
       {PRODUCT_STATUS_LABEL[status]}
     </span>
   );
@@ -349,9 +373,11 @@ function StatusPill({ status }: { status: ProductStatus }) {
 function ProductCard({
   product,
   index,
+  live = false,
 }: {
   product: StoreProduct;
   index: number;
+  live?: boolean;
 }) {
   const locked = product.status !== "available";
 
@@ -364,7 +390,7 @@ function ProductCard({
       <CornerBrackets className="opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
       <div className="flex items-start justify-between gap-3">
-        <StatusPill status={product.status} />
+        <StatusPill status={product.status} live={live} />
         {product.badge && (
           <span className="vx-mono inline-flex items-center gap-1 border border-vx-red/40 bg-vx-red/10 px-2 py-0.5 text-[9px] tracking-[0.2em] text-rose-100">
             <Flame className="size-3 text-vx-red" />
@@ -398,9 +424,15 @@ function ProductCard({
           <p className="vx-mono text-2xl font-bold text-vx-red">
             {formatIDR(product.price)}
           </p>
-          <p className="vx-mono mt-1 text-[10px] tracking-[0.2em] text-muted-foreground">
+          <p className="vx-mono mt-1.5 text-[10px] tracking-[0.2em] text-muted-foreground">
             DURASI {product.duration}
           </p>
+          {product.stockNote && (
+            <p className="vx-mono mt-2 inline-flex w-fit items-center gap-1.5 border border-vx-ember/35 bg-vx-ember/10 px-2 py-0.5 text-[9px] tracking-[0.16em] text-vx-ember">
+              <Activity className="size-3" />
+              {product.stockNote}
+            </p>
+          )}
         </div>
         <HexIcon className="h-10 w-10">
           <Package className="size-4" />
@@ -465,6 +497,11 @@ function Catalog() {
     [catalog, category],
   );
 
+  const saleProducts = useMemo(
+    () => catalog.filter((product) => discountPercent(product) > 0),
+    [catalog],
+  );
+
   return (
     <section
       id="produk"
@@ -512,9 +549,45 @@ function Catalog() {
               key={product._id ?? product.name}
               product={product}
               index={index}
+              live={Boolean(product._id)}
             />
           ))}
         </div>
+
+        {saleProducts.length > 0 && (
+          <motion.div
+            {...reveal}
+            className="vx-panel vx-cut mt-6 flex flex-wrap items-center gap-4 border-vx-ember/30 p-4"
+          >
+            <HexIcon className="h-10 w-10">
+              <TicketPercent className="size-4" />
+            </HexIcon>
+            <div className="min-w-0 flex-1">
+              <p className="vx-mono text-[11px] font-bold tracking-[0.14em] text-vx-ember">
+                {saleProducts.length} PAKET LAGI FLASH SALE
+              </p>
+              <p className="vx-mono mt-1 text-[10px] text-muted-foreground">
+                {saleProducts
+                  .slice(0, 3)
+                  .map(
+                    (item) =>
+                      `${item.name} -${discountPercent(item)}%`,
+                  )
+                  .join(" • ")}
+                {saleProducts.length > 3 ? " • ..." : ""}
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setCategory("SEMUA")}
+              className="vx-cut vx-mono gap-2 text-[10px] tracking-[0.2em]"
+            >
+              <TicketPercent className="size-3.5" />
+              LIHAT PROMO
+            </Button>
+          </motion.div>
+        )}
 
         <motion.div
           {...reveal}
@@ -779,13 +852,113 @@ function HowToOrder() {
   );
 }
 
+function FaqSection() {
+  const live = useQuery(api.faqs.listPublic);
+  const faqs =
+    live && live.length > 0
+      ? live.map((item) => ({ question: item.question, answer: item.answer }))
+      : FALLBACK_FAQS;
+
+  return (
+    <section
+      id="faq"
+      className="relative scroll-mt-20 border-t border-vx-red/15 py-20 sm:py-24"
+    >
+      <div className="mx-auto w-full max-w-[1600px] px-5 sm:px-8">
+        <div className="grid gap-10 lg:grid-cols-12">
+          <motion.div {...reveal} className="lg:col-span-4">
+            <SectionLabel>// FAQ</SectionLabel>
+            <h2 className="mt-5 font-display text-3xl leading-tight font-black uppercase sm:text-4xl">
+              SERING <span className="vx-glow text-vx-red">DITANYAKAN</span>
+            </h2>
+            <p className="mt-5 max-w-md text-sm leading-relaxed text-muted-foreground">
+              Jawaban cepat untuk pertanyaan yang paling sering masuk ke chat
+              admin. Belum terjawab? Tanya langsung lewat WhatsApp — dibalas
+              admin asli, bukan bot.
+            </p>
+            <Button
+              asChild
+              variant="outline"
+              className="vx-cut vx-mono mt-6 border-vx-red/40 bg-transparent gap-2 px-6 text-[11px] tracking-[0.22em] text-rose-100 hover:bg-vx-red/10 hover:text-white"
+            >
+              <a
+                href={whatsappUrl(`${ORDER_INTRO}, mau tanya soal paket dulu.`)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <MessageCircle className="size-4" />
+                TANYA ADMIN
+              </a>
+            </Button>
+          </motion.div>
+
+          <motion.div {...reveal} className="lg:col-span-8">
+            <HudPanel label="// BASE PENGETAHUAN" bodyClassName="px-4 py-4 sm:px-5">
+              <Accordion type="single" collapsible className="w-full">
+                {faqs.map((item, index) => (
+                  <AccordionItem
+                    key={item.question}
+                    value={`faq-${index}`}
+                    className="border-vx-red/15"
+                  >
+                    <AccordionTrigger className="vx-mono gap-3 py-4 text-left text-[12px] font-bold tracking-[0.06em] text-rose-50 hover:no-underline hover:text-vx-red">
+                      <span className="vx-mono mr-1 text-vx-red/70">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      {item.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+                      {item.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </HudPanel>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function OrderForm({ catalog }: { catalog: StoreProduct[] }) {
   const submitOrder = useMutation(api.orders.submit);
+  const checkVoucher = useMutation(api.vouchers.check);
   const [productName, setProductName] = useState(catalog[0]?.name ?? "");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Voucher state — diterapkan realtime di form sebelum order dikirim.
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucher, setVoucher] = useState<
+    { code: string; percentOff: number; finalPrice: number } | null
+  >(null);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
+  const [lastOrderCode, setLastOrderCode] = useState<string | null>(null);
+
   const selected = catalog.find((product) => product.name === productName);
+  const basePrice = selected?.price ?? 0;
+  const finalPrice = voucher ? voucher.finalPrice : basePrice;
+
+  const handleApplyVoucher = async () => {
+    const code = voucherCode.trim();
+    if (!code || !selected) return;
+    setIsCheckingVoucher(true);
+    setVoucherError(null);
+    try {
+      const result = await checkVoucher({ code, price: basePrice });
+      setVoucher(result);
+      toast.success(
+        `VOUCHER AKTIF // ${result.percentOff}% off — total ${formatIDR(result.finalPrice)}`,
+      );
+    } catch (err) {
+      setVoucher(null);
+      setVoucherError(formatConvexError(err, "Voucher tidak bisa dipakai."));
+    } finally {
+      setIsCheckingVoucher(false);
+    }
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -794,15 +967,33 @@ function OrderForm({ catalog }: { catalog: StoreProduct[] }) {
     const name = String(data.get("name") ?? "");
     const contact = String(data.get("contact") ?? "");
     const note = String(data.get("note") ?? "");
-    const price = selected?.price ?? 0;
 
     setIsSending(true);
     setError(null);
     try {
-      await submitOrder({ name, contact, productName, price, note });
+      const result = await submitOrder({
+        name,
+        contact,
+        productName,
+        price: finalPrice,
+        note,
+      });
+      setLastOrderCode(result?.orderCode ?? null);
       form.reset();
       window.open(
-        whatsappUrl(customOrderMessage({ name, productName, price, note })),
+        whatsappUrl(
+          customOrderMessage({
+            name,
+            productName,
+            price: finalPrice,
+            note: [
+              note,
+              voucher ? `Voucher: ${voucher.code} (-${voucher.percentOff}%)` : "",
+            ]
+              .filter(Boolean)
+              .join(" | ") || undefined,
+          }),
+        ),
         "_blank",
         "noopener,noreferrer",
       );
@@ -874,13 +1065,75 @@ function OrderForm({ catalog }: { catalog: StoreProduct[] }) {
       </label>
 
       {selected && (
-        <div className="vx-cut-sm flex flex-wrap items-center justify-between gap-2 border border-vx-red/25 bg-vx-red/5 px-4 py-3">
-          <span className="vx-mono text-[10px] tracking-[0.2em] text-muted-foreground">
-            TOTAL {selected.category}
-          </span>
-          <span className="vx-mono text-sm font-bold text-vx-red">
-            {formatIDR(selected.price)}
-          </span>
+        <div className="vx-cut-sm space-y-3 border border-vx-red/25 bg-vx-red/5 px-4 py-3">
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="min-w-0 flex-1 space-y-1.5">
+              <span className="vx-mono block text-[10px] tracking-[0.2em] text-muted-foreground">
+                KODE VOUCHER (OPSIONAL)
+              </span>
+              <div className="flex gap-2">
+                <Input
+                  value={voucherCode}
+                  onChange={(event) => setVoucherCode(event.target.value.toUpperCase())}
+                  disabled={isSending || isCheckingVoucher}
+                  placeholder="HEMAT20"
+                  className="vx-mono vx-cut-sm h-10 border-vx-ember/40 bg-[#0a0509] text-sm uppercase placeholder:text-muted-foreground/50 focus-visible:border-vx-ember/70"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleApplyVoucher}
+                  disabled={isCheckingVoucher || isSending || !voucherCode.trim()}
+                  className="vx-cut-sm vx-mono h-10 shrink-0 gap-2 border-vx-ember/40 bg-transparent px-4 text-[10px] tracking-[0.18em] text-vx-ember hover:bg-vx-ember/10 hover:text-vx-ember"
+                >
+                  {isCheckingVoucher ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Ticket className="size-3.5" />
+                  )}
+                  PAKAI
+                </Button>
+              </div>
+            </label>
+          </div>
+          {voucherError && (
+            <p className="vx-mono text-[10px] tracking-[0.08em] text-vx-red">
+              {voucherError}
+            </p>
+          )}
+          {voucher && (
+            <div className="flex flex-wrap items-center justify-between gap-2 border border-vx-ember/35 bg-vx-ember/10 px-3 py-2">
+              <span className="vx-mono inline-flex items-center gap-1.5 text-[10px] tracking-[0.16em] text-vx-ember">
+                <TicketPercent className="size-3.5" />
+                {voucher.code} // -{voucher.percentOff}%
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setVoucher(null);
+                  setVoucherCode("");
+                }}
+                className="vx-mono text-[9px] tracking-[0.18em] text-muted-foreground transition-colors hover:text-vx-red"
+              >
+                HAPUS
+              </button>
+            </div>
+          )}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-vx-red/15 pt-2">
+            <span className="vx-mono text-[10px] tracking-[0.2em] text-muted-foreground">
+              TOTAL {selected.category}
+            </span>
+            <span className="vx-mono flex items-baseline gap-2">
+              {voucher && (
+                <span className="text-[11px] text-muted-foreground line-through decoration-vx-red/70">
+                  {formatIDR(basePrice)}
+                </span>
+              )}
+              <span className="text-sm font-bold text-vx-red">
+                {formatIDR(finalPrice)}
+              </span>
+            </span>
+          </div>
         </div>
       )}
 
@@ -888,6 +1141,26 @@ function OrderForm({ catalog }: { catalog: StoreProduct[] }) {
         <p className="vx-mono border border-vx-red/40 bg-vx-red/10 px-3 py-2 text-[11px] tracking-[0.1em] text-rose-200">
           ERROR // {error}
         </p>
+      )}
+
+      {lastOrderCode && (
+        <div className="vx-cut-sm flex flex-wrap items-center gap-3 border border-[#4ade80]/35 bg-[#4ade80]/10 px-4 py-3">
+          <ScanLine className="size-4 text-[#7dffb0]" />
+          <div className="min-w-0">
+            <p className="vx-mono text-[10px] tracking-[0.18em] text-[#7dffb0]">
+              ORDER TERCATAT — KODE PELACAKAN ANDA
+            </p>
+            <p className="vx-mono mt-0.5 text-base font-bold tracking-[0.14em] text-rose-50">
+              {lastOrderCode}
+            </p>
+          </div>
+          <Link
+            to={`/status-order?kode=${encodeURIComponent(lastOrderCode)}`}
+            className="vx-mono ml-auto text-[10px] tracking-[0.18em] text-vx-red transition-opacity hover:opacity-70"
+          >
+            LACAK STATUS →
+          </Link>
+        </div>
       )}
 
       <Button
@@ -1034,19 +1307,31 @@ function Order() {
             <PaymentPanel />
 
             <HudPanel label="// FAQ" bodyClassName="space-y-4 px-5 py-5">
-              {FAQ.map((item) => (
-                <div
-                  key={item.question}
-                  className="border-l-2 border-vx-red/30 pl-3"
+              <p className="vx-mono text-[11px] leading-5 text-muted-foreground">
+                Ada pertanyaan soal paket, garansi, atau instalasi? Cek base
+                pengetahuan toko atau lacak status order Anda.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  to="/"
+                  onClick={() => scrollToSection("faq")}
+                  className="vx-mono vx-cut-sm border border-vx-red/30 bg-vx-red/5 px-3 py-1.5 text-[10px] tracking-[0.2em] text-rose-100 transition-colors hover:border-vx-red/70 hover:text-vx-red"
                 >
-                  <p className="vx-mono text-[11px] tracking-[0.08em] text-rose-50">
-                    {item.question}
-                  </p>
-                  <p className="mt-1.5 text-[12px] leading-5 text-muted-foreground">
-                    {item.answer}
-                  </p>
-                </div>
-              ))}
+                  BUKA FAQ
+                </Link>
+                <Link
+                  to="/status-order"
+                  className="vx-mono vx-cut-sm border border-vx-red/30 bg-vx-red/5 px-3 py-1.5 text-[10px] tracking-[0.2em] text-rose-100 transition-colors hover:border-vx-red/70 hover:text-vx-red"
+                >
+                  LACAK ORDER
+                </Link>
+                <Link
+                  to="/kebijakan"
+                  className="vx-mono vx-cut-sm border border-vx-red/30 bg-vx-red/5 px-3 py-1.5 text-[10px] tracking-[0.2em] text-rose-100 transition-colors hover:border-vx-red/70 hover:text-vx-red"
+                >
+                  KEBIJAKAN
+                </Link>
+              </div>
             </HudPanel>
 
             <HudPanel label="// MEMBER AREA" bodyClassName="px-5 py-5">
@@ -1092,6 +1377,7 @@ export default function Landing() {
         <Advantages />
         <Testimonials />
         <HowToOrder />
+        <FaqSection />
         <Order />
         <SiteFooter />
       </main>
