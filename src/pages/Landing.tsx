@@ -164,28 +164,7 @@ const FALLBACK_PAYMENTS = [
   "QRIS",
 ];
 
-const FALLBACK_FAQS: { question: string; answer: string }[] = [
-  {
-    question: "Aman dipakai di akun utama?",
-    answer:
-      "Kami hanya merilis build yang sudah lolos uji internal dan selalu memperbarui signature setelah patch. Risiko tetap ada di setiap produk, jadi pakai dengan bijak.",
-  },
-  {
-    question: "Emulator apa saja yang didukung?",
-    answer:
-      "Gameloop, BlueStacks, LDPlayer, dan MEmu di Windows 10/11 64-bit. Untuk setingan emulator kami tuning langsung lewat remote.",
-  },
-  {
-    question: "Perlu instal ulang saat update?",
-    answer:
-      "Tidak. Cukup download loader terbaru dari link member yang kami kirim, config lama tetap dipakai.",
-  },
-  {
-    question: "Bisa refund?",
-    answer:
-      "Refund berlaku jika produk tidak dapat dijalankan setelah dibantu admin dan bukan karena salah penggunaan.",
-  },
-];
+// FAQ dummy dihapus — section hanya tampil setelah owner mengisi FAQ asli via console (FaqManager).
 
 function Hero() {
   return (
@@ -371,11 +350,11 @@ function TrustStrip() {
       value: counters ? `${counters.total}+` : "—",
     },
     { icon: Clock, label: "RESPON ADMIN", value: "< 5 MNT" },
-    {
-      icon: Star,
-      label: "RATING PEMBELI",
-      value: avgRating ? `${avgRating}/5` : "5.0/5",
-    },
+    // Rating hanya ditampilkan kalau testimoni asli sudah ada di database;
+    // sebelum itu diganti janji garansi supaya tidak ada angka palsu.
+    avgRating
+      ? { icon: Star, label: "RATING PEMBELI", value: `${avgRating}/5` }
+      : { icon: BadgeCheck, label: "GARANSI RESET", value: "AKTIF" },
   ];
 
   return (
@@ -926,10 +905,16 @@ function HowToOrder() {
 
 function FaqSection() {
   const live = useQuery(api.faqs.listPublic);
-  const faqs =
-    live && live.length > 0
-      ? live.map((item) => ({ question: item.question, answer: item.answer }))
-      : FALLBACK_FAQS;
+
+  // Sembunyikan section sampai owner mengisi FAQ asli via console (FaqManager).
+  if (!live || live.length === 0) {
+    return null;
+  }
+
+  const faqs = (live ?? []).map((item) => ({
+    question: item.question,
+    answer: item.answer,
+  }));
 
   return (
     <section

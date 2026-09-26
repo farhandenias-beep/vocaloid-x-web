@@ -33,9 +33,10 @@ export function whatsappUrl(message: string) {
 export const ORDER_INTRO = "Bang mau order";
 
 /** Link sosial media toko. Ganti dengan URL profil asli milikmu. */
-export const INSTAGRAM_URL = "https://instagram.com";
+// Kosongkan sampai akun asli dibuat — footer otomatis menyembunyikan link kosong.
+export const INSTAGRAM_URL = "";
 
-export const YOUTUBE_URL = "https://youtube.com";
+export const YOUTUBE_URL = "";
 
 /** Contoh: "https://www.tiktok.com/@username". Kosongkan untuk menyembunyikan. */
 export const TIKTOK_URL = "https://www.tiktok.com/@frhanlvly0";
