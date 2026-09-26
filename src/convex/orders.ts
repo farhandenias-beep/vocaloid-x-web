@@ -74,6 +74,16 @@ export const publicStatus = query({
   },
 });
 
+/** Public social-proof counters for the landing page (safe aggregates only). */
+export const publicCount = query({
+  args: {},
+  handler: async (ctx) => {
+    const orders = await ctx.db.query("orders").collect();
+    const doneCount = orders.filter((order) => order.status === "done").length;
+    return { total: orders.length, doneCount };
+  },
+});
+
 /** Sales statistics for the operator dashboard. */
 export const stats = query({
   args: {},

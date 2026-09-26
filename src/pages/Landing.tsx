@@ -15,6 +15,7 @@ import {
 import { SystemMonitor } from "@/components/vocaloid/system-monitor";
 import { SystemTerminal } from "@/components/vocaloid/system-terminal";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -309,6 +310,8 @@ function Hero() {
                 </span>
               ))}
             </motion.div>
+
+            <TrustStrip />
           </motion.div>
 
           <motion.div
@@ -342,6 +345,58 @@ function Hero() {
         LIHAT KATALOG
       </button>
     </section>
+  );
+}
+
+/** Live social-proof strip: real order counters from the database + promises. */
+function TrustStrip() {
+  const counters = useQuery(api.orders.publicCount);
+  const testimonials = useQuery(api.testimonials.listPublic);
+
+  const avgRating = useMemo(() => {
+    if (!testimonials || testimonials.length === 0) return null;
+    const total = testimonials.reduce((sum, item) => sum + item.rating, 0);
+    return (total / testimonials.length).toFixed(1);
+  }, [testimonials]);
+
+  const metrics = [
+    {
+      icon: ShieldCheck,
+      label: "TRANSAKSI SELESAI",
+      value: counters ? `${counters.doneCount}+` : "—",
+    },
+    {
+      icon: Package,
+      label: "ORDER DITERIMA",
+      value: counters ? `${counters.total}+` : "—",
+    },
+    { icon: Clock, label: "RESPON ADMIN", value: "< 5 MNT" },
+    {
+      icon: Star,
+      label: "RATING PEMBELI",
+      value: avgRating ? `${avgRating}/5` : "5.0/5",
+    },
+  ];
+
+  return (
+    <div className="vx-panel vx-cut mt-8 grid grid-cols-2 gap-px overflow-hidden border-vx-red/25 bg-vx-red/10 sm:grid-cols-4">
+      {metrics.map((metric) => (
+        <div
+          key={metric.label}
+          className="flex items-center gap-3 bg-[#0a0509]/90 px-4 py-3.5"
+        >
+          <metric.icon className="size-4 shrink-0 text-vx-red" />
+          <div className="min-w-0">
+            <p className="vx-mono truncate text-[9px] tracking-[0.22em] text-muted-foreground">
+              {metric.label}
+            </p>
+            <p className="vx-mono text-base font-bold text-rose-50">
+              {metric.value}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -481,6 +536,7 @@ function ProductCard({
 function Catalog() {
   const live = useQuery(api.products.listPublic);
   const [category, setCategory] = useState("SEMUA");
+  const loading = live === undefined;
 
   const catalog: StoreProduct[] = live && live.length > 0 ? live : DEFAULT_PRODUCTS;
 
@@ -544,14 +600,30 @@ function Catalog() {
         </motion.div>
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {visible.map((product, index) => (
-            <ProductCard
-              key={product._id ?? product.name}
-              product={product}
-              index={index}
-              live={Boolean(product._id)}
-            />
-          ))}
+          {loading
+            ? Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={`skeleton-${index}`}
+                  className="vx-panel vx-cut flex flex-col gap-4 p-5"
+                >
+                  <Skeleton className="h-4 w-24 bg-vx-red/10" />
+                  <Skeleton className="h-5 w-3/4 bg-vx-red/10" />
+                  <Skeleton className="h-3.5 w-full bg-vx-red/15" />
+                  <Skeleton className="h-3.5 w-2/3 bg-vx-red/15" />
+                  <div className="mt-3 flex items-end justify-between border-t border-vx-red/15 pt-4">
+                    <Skeleton className="h-7 w-28 bg-vx-red/20" />
+                    <Skeleton className="h-9 w-24 bg-vx-red/10" />
+                  </div>
+                </div>
+              ))
+            : visible.map((product, index) => (
+                <ProductCard
+                  key={product._id ?? product.name}
+                  product={product}
+                  index={index}
+                  live={Boolean(product._id)}
+                />
+              ))}
         </div>
 
         {saleProducts.length > 0 && (
@@ -1378,6 +1450,7 @@ export default function Landing() {
         <Testimonials />
         <HowToOrder />
         <FaqSection />
+        <TrustStrip />
         <Order />
         <SiteFooter />
       </main>
