@@ -222,7 +222,7 @@ function Hero() {
               }}
               className="mt-5 font-display text-base font-bold tracking-[0.32em] text-rose-100 sm:text-lg"
             >
-              CHEAT <span className="text-vx-red">×</span> SETTING FF PC{" "}
+              CHEAT <span className="text-vx-red">×</span> SETINGAN PC{" "}
               <span className="text-vx-red">×</span> EMULATOR
             </motion.p>
 

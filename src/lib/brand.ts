@@ -3,7 +3,7 @@
 export const BRAND_NAME = "VOCALOID-X";
 export const DEVELOPER_NAME = "FRHANLVLY";
 
-export const STORE_TAGLINE = "CHEAT × SETTING FF PC";
+export const STORE_TAGLINE = "CHEAT × SETINGAN PC";
 export const STORE_CITY = "Subang, Jawa Barat";
 
 export const SUPPORT_EMAIL = "order@vocaloid-x.store";
